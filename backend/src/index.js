@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const githubRoutes = require('./routes/github');
 const userRoutes = require('./routes/user');
 const githubDataRoutes = require('./routes/githubData');
+const wakatimeRoutes = require('./routes/wakatime');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,6 +26,7 @@ app.get('/health', async (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/auth', githubRoutes);
+app.use('/auth', wakatimeRoutes);
 app.use('/user', userRoutes);
 app.use('/github', githubDataRoutes);
 

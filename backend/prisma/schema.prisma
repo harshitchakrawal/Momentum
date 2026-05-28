@@ -15,5 +15,6 @@ model User {
   githubId      String?  @unique
   githubToken   String?
   avatarUrl     String?
+  wakatimeToken String?
   createdAt     DateTime @default(now())
 }
