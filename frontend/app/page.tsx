@@ -1,21 +1,53 @@
-export default function Home() {
-  const githubLoginUrl = 'http://localhost:3001/auth/github';
+import Hero from '@/components/hero';
+import Features from '@/components/features';
+import Footer from '@/components/footer';
 
+const GITHUB_LOGIN_URL = 'http://localhost:3001/auth/github';
+
+export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <div className="text-center space-y-6">
-        <h1 className="text-5xl font-bold text-white">Momentum</h1>
-        <p className="text-gray-400 text-lg">Your personal dev productivity dashboard</p>
-        <a
-          href={githubLoginUrl}
-          className="inline-flex items-center gap-3 bg-white text-gray-900 font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z" />
-          </svg>
-          Continue with GitHub
+    <main className="min-h-screen bg-[#08090A] text-[#F7F8F8] flex flex-col">
+      {/* Nav */}
+      <nav className="flex items-center justify-between px-30 h-20 border-b border-white/3 sticky top-0 z-50 bg-[#08090A]/90 backdrop-blur-md">
+        {/* Left: Logo only */}
+        <a href="/" className="flex items-center gap-2.5 shrink-0">
+         
+          <span className="text-xl font-semibold tracking-tight text-[#F7F8F8]">Momentum</span>
         </a>
-      </div>
+
+        {/* Right: nav links + divider + auth */}
+        <div className="flex items-center gap-7">
+          <div className="hidden md:flex items-center gap-7">
+            {['Features', 'GitHub', 'WakaTime', 'Pricing'].map((link) => (
+              <a
+                key={link}
+                href="#features"
+                className="text-sm text-[#777] hover:text-[#F7F8F8] transition-colors"
+              >
+                {link}
+              </a>
+            ))}
+          </div>
+          <div className="hidden md:block w-px h-4 bg-white/10" />
+          <a
+            href={GITHUB_LOGIN_URL}
+            className="text-sm text-[#777] hover:text-[#F7F8F8] transition-colors"
+          >
+            Log in
+          </a>
+          <a
+            href={GITHUB_LOGIN_URL}
+            className="text-sm font-medium text-[#F7F8F8] border border-white/20 hover:border-white/40 px-4 py-2 rounded-lg transition-colors"
+          >
+            Sign up
+          </a>
+        </div>
+      </nav>
+
+      <Hero />
+      <Features />
+
+      <Footer />
     </main>
   );
 }
