@@ -8,6 +8,9 @@ from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserSerializer
+from .models import User
+from django.shortcuts import redirect
+from django.conf import settings
 
 def build_auth_response(user, message):
     refresh = RefreshToken.for_user(user)
@@ -23,15 +26,28 @@ class RegisterView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception = True)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return build_auth_response(user, "Registered sucessfully")
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
-    def post(self,request):
-        user = authenticate(username=request.data.get('username'), password=request.data.get('password'))
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        try:
+            user_obj = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "Invalid Credentials"}, status=401)
+
+        user = authenticate(username=user_obj.username, password=password)
+
         if user is None:
-            return Response({"error":"Invalid Credentials"}, status=401)
+            return Response({"error": "Invalid Credentials"}, status=401)
+
         return build_auth_response(user, "Login sucessfully")
+
     
 class MeView(APIView):
     def get(self,request):
@@ -44,3 +60,15 @@ class LogoutView(APIView):
             response.delete_cookie('access_token')
             response.delete_cookie('refresh_token')
             return response
+
+class GithubLoginView(APIView):
+       permission_classes = [permissions.AllowAny] 
+       
+       def get(self, request):
+        github_authorize_url = (
+            "https://github.com/login/oauth/authorize"
+            f"?client_id={settings.GITHUB_CLIENT_ID}"
+            "&redirect_uri=http://localhost:8000/api/auth/github/callback/"
+            "&scope=read:user user:email"
+        )
+        return redirect(github_authorize_url)

@@ -1,6 +1,48 @@
+'use client'
+import { useState } from "react"
+import { useRouter } from 'next/navigation'
+
 const GITHUB_LOGIN_URL = 'http://localhost:3001/auth/github'
 
 export default function Login() {
+
+  const router = useRouter()
+
+  const [showEmailForm, setShowEmailForm] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try{
+      const response = await fetch('http://localhost:8000/api/auth/login/',{
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      })
+      if(!response.ok){
+          const data = await response.json()
+          const firstError = Object.values(data)[0]
+          const message = Array.isArray(firstError) ? firstError[0] : String(firstError)
+          setError(message)
+          setLoading(false)
+          return
+      }
+      router.push('/dashboard')
+      } 
+      catch{
+        setError('Could not reach the server. Is the backend running?')
+        setLoading(false)
+      }
+    }
+
+  
   return (
     <main className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-4">
       <a href="/" className="text-sm font-semibold text-white mb-10 tracking-tight">
@@ -12,6 +54,8 @@ export default function Login() {
       </h1>
 
       <div className="w-full max-w-sm flex flex-col gap-3">
+        {!showEmailForm ? (
+        <>
         <a
           href={GITHUB_LOGIN_URL}
           className="flex items-center justify-center gap-3 bg-white hover:bg-[#e5e5e5] text-[#0a0a0a] text-sm font-semibold py-3 rounded-md transition-colors"
@@ -22,7 +66,9 @@ export default function Login() {
           Continue with GitHub
         </a>
 
-        <button className="flex items-center justify-center gap-3 bg-transparent hover:bg-[#111] border border-[#222] text-[#666] text-sm font-medium py-3 rounded-md transition-colors">
+        <button
+         onClick={() => setShowEmailForm(true)}
+         className="flex items-center justify-center gap-3 bg-transparent hover:bg-[#111] border border-[#222] text-[#666] text-sm font-medium py-3 rounded-md transition-colors">
           Continue with email
         </button>
 
@@ -33,6 +79,46 @@ export default function Login() {
         <button className="flex items-center justify-center gap-3 bg-transparent hover:bg-[#111] border border-[#222] text-[#666] text-sm font-medium py-3 rounded-md transition-colors">
           Log in with passkey
         </button>
+        </> ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-transparent border border-[#222] text-white text-sm py-3 px-4 rounded-md placeholder:text-[#555] focus:outline-none focus:border-[#444]"
+            />
+            
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-transparent border border-[#222] text-white text-sm py-3 px-4 rounded-md placeholder:text-[#555] focus:outline-none focus:border-[#444]"
+            />
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-white hover:bg-[#e5e5e5] text-[#0a0a0a] text-sm font-semibold py-3 rounded-md transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Logging in...' : 'Login to your account'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowEmailForm(false)}
+              className="text-[#666] text-sm hover:text-white transition-colors"
+            >
+              Back
+            </button>
+          </form>
+        )}
+        
       </div>
 
       <p className="mt-8 text-sm text-[#444]">
