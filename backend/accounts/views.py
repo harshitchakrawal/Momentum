@@ -12,10 +12,11 @@ from .models import User
 from django.shortcuts import redirect
 from django.conf import settings
 
-def build_auth_response(user, message):
+import requests
+
+def set_auth_cookies(response, user):
     refresh = RefreshToken.for_user(user)
     access = str(refresh.access_token)
-    response = Response({"message": message}, status=200)
     response.set_cookie(key='access_token', value=access, httponly=True, samesite='Lax', secure=False)
     response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, samesite='Lax', secure=False)
     return response
@@ -28,7 +29,8 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return build_auth_response(user, "Registered sucessfully")
+        return set_auth_cookies(Response({"message": "Registered sucessfully"}, status=200), user)
+
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -46,7 +48,8 @@ class LoginView(APIView):
         if user is None:
             return Response({"error": "Invalid Credentials"}, status=401)
 
-        return build_auth_response(user, "Login sucessfully")
+        return set_auth_cookies(Response({"message": "Login sucessfully"}, status=200), user)
+
 
     
 class MeView(APIView):
@@ -72,3 +75,17 @@ class GithubLoginView(APIView):
             "&scope=read:user user:email"
         )
         return redirect(github_authorize_url)
+
+class GithubCallbackView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # url se code letaa hai
+        code = requests.GET.get('code') 
+        token_response = requests.post(
+            "https://github.com/login/oauth/access_token",
+            headers={"Accept": "application/json"},
+            data = {
+                
+            }
+        )
