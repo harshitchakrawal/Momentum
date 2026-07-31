@@ -81,11 +81,41 @@ class GithubCallbackView(APIView):
 
     def get(self, request):
         # url se code letaa hai
-        code = requests.GET.get('code') 
+        code = request.GET.get('code') 
         token_response = requests.post(
             "https://github.com/login/oauth/access_token",
             headers={"Accept": "application/json"},
-            data = {
-                
-            }
+            data={
+                "client_id": settings.GITHUB_CLIENT_ID,
+                "client_secret": settings.GITHUB_CLIENT_SECRET,
+                "code": code,
+            },
         )
+        access_token = token_response.json().get("access_token")
+
+        profile_response = requests.get(
+                "https://api.github.com/user",
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+        profile = profile_response.json()
+
+        github_id = str(profile.get("id"))
+        username = profile.get("login")
+        email = profile.get("email")
+
+        if email is None:
+            email_response = requests.get(
+                "https://github.com/user/email"
+                headers = {"Authorization": f"Bearer {access_token}"}
+            )
+            emails = email_response.json()
+            primary = next((e for e in emails if e.get(email)), None)
+            email = primary["email"] if primary else None
+
+            try:
+                user = User.objects.get(github_id=github_id)
+            except User.DoesNotExist:
+                user = User.objects.create_user(username=username, email=email, github_id=github_id)
+
+            response = redirect("http://localhost:3000/dashboard")
+            return set_auth_cookies(response, user)

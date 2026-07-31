@@ -7,4 +7,5 @@ urlpatterns = [
     path('me/', MeView.as_view(), name='me'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('github/', GithubLoginView.as_view(), name='github-login'),
+    # path('github/', Github.as_view(), name='github-login'),
 ]
