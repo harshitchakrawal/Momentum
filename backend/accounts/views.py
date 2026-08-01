@@ -105,17 +105,20 @@ class GithubCallbackView(APIView):
 
         if email is None:
             email_response = requests.get(
-                "https://github.com/user/email"
+                "https://api.github.com/user/emails",
                 headers = {"Authorization": f"Bearer {access_token}"}
             )
             emails = email_response.json()
-            primary = next((e for e in emails if e.get(email)), None)
+            primary = next((e for e in emails if e.get("primary")), None)
             email = primary["email"] if primary else None
 
-            try:
-                user = User.objects.get(github_id=github_id)
-            except User.DoesNotExist:
-                user = User.objects.create_user(username=username, email=email, github_id=github_id)
+        try:
+            user = User.objects.get(github_id=github_id)
+            user.github_token = access_token
+            user.save()
 
-            response = redirect("http://localhost:3000/dashboard")
-            return set_auth_cookies(response, user)
+        except User.DoesNotExist:
+            user = User.objects.create_user(username=username, email=email, github_id=github_id, github_token=access_token)
+
+        response = redirect("http://localhost:3000/dashboard")
+        return set_auth_cookies(response, user)
