@@ -11,6 +11,7 @@ from .serializers import UserSerializer
 from .models import User
 from django.shortcuts import redirect
 from django.conf import settings
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 import requests
 
@@ -122,3 +123,22 @@ class GithubCallbackView(APIView):
 
         response = redirect("http://localhost:3000/dashboard")
         return set_auth_cookies(response, user)
+
+class RefreshView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+
+        if refresh_token is None:
+            return Response({"error": "No refresh token"}, status=401)
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            access = str(refresh.access_token)
+            response = Response({"message":"Token Refreshed"}, status=200)
+            response.set_cookie(key='access_token', value=access, httponly=True, samesite='Lax', secure=False)
+            return response
+        except (InvalidToken, TokenError):
+            return Response({"error": "Refresh token expired, please login again"}, status=401)
+

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, LoginView, MeView, LogoutView, GithubLoginView, GithubCallbackView
+from .views import RegisterView, LoginView, MeView, LogoutView, GithubLoginView, GithubCallbackView, RefreshView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -8,4 +8,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('github/', GithubLoginView.as_view(), name='github-login'),
     path('github/callback/', GithubCallbackView.as_view(), name='github-callback'),
+    path('refresh/', RefreshView.as_view(), name='refresh'),
+
 ]
