@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { useRouter } from 'next/navigation'
 
-const GITHUB_LOGIN_URL = 'http://localhost:3001/auth/github'
+const GITHUB_LOGIN_URL = 'http://localhost:8000/api/auth/github/'
 
 export default function Login() {
 
