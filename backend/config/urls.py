@@ -17,9 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from integrations.views import WakatimeConnectView, WakatimeCallbackView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/github/', include('integrations.urls')),
-
+    path('api/wakatime/connect/', WakatimeConnectView.as_view(), name='wakatime-connect'),
+    path('api/wakatime/callback/', WakatimeCallbackView.as_view(), name='wakatime-callback'),
 ]
