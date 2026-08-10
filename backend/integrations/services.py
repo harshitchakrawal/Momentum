@@ -92,6 +92,4 @@ def sync_github_commits(github_token, user):
                         "author_date": commit_data["commit"]["author"]["date"],
                         "html_url": commit_data["html_url"],
                     }
-
                 )
-
