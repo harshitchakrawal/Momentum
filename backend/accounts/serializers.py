@@ -19,4 +19,12 @@ class UserSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     username = serializers.CharField(read_only=True)
     email = serializers.EmailField(read_only=True)
+    github_connected = serializers.SerializerMethodField()
+    wakatime_connected = serializers.SerializerMethodField()
+
+    def get_github_connected(self, obj):
+        return bool(obj.github_token)
+
+    def get_wakatime_connected(self, obj):
+        return bool(obj.wakatime_token)
        

@@ -3,26 +3,33 @@ from django.shortcuts import redirect
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from .serializers import RepoSerializer, CommitSerializer
+from .models import Repo, Commit
 
 from .services import (
-    fetch_github_repos,
     fetch_github_commits,
     wakatime_oauth_authenticate,
     WakatimeOAuthError,
+    sync_github_repos,
+    sync_github_commits
 )
 
 
 class GithubRepoViews(APIView):
     def get(self, request):
-        repos = fetch_github_repos(request.user.github_token)
-        return Response(repos)
+        sync_github_repos(request.user.github_token, request.user)
 
+        repos = Repo.objects.filter(user=request.user)   
+        serializer = RepoSerializer(repos, many=True)
+        return Response(serializer.data)
+        
 
 class GithubCommitViews(APIView):
     def get(self, request):
-        commits = fetch_github_commits(request.user.github_token)
-        return Response(commits)
-
+        sync_github_commits(request.user.github_token, request.user)
+        commit = Commit.objects.filter(repo__user=request.user)
+        serializer = CommitSerializer(commit, many=True)
+        return Response(serializer.data)
 
 class WakatimeConnectView(APIView):
     def get(self, request):

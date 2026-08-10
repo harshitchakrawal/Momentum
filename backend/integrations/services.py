@@ -1,5 +1,6 @@
 import requests
 from django.conf import settings
+from .models import Repo, Commit
 
 
 class WakatimeOAuthError(Exception):
@@ -55,3 +56,42 @@ def _fetch_wakatime_access_token(code):
 
 def wakatime_oauth_authenticate(code):
     return _fetch_wakatime_access_token(code)
+
+def sync_github_repos(github_token, user):
+    repos = fetch_github_repos(github_token)
+
+    for repo_data in repos:
+        Repo.objects.update_or_create(
+            github_repo_id=repo_data["id"],
+            defaults={
+                "user": user,
+                "name": repo_data["name"],
+                "full_name": repo_data["full_name"],
+                "html_url": repo_data["html_url"],
+                "language": repo_data["language"],
+                "updated_at": repo_data["updated_at"],
+                "private": repo_data["private"],
+            }
+        )
+
+def sync_github_commits(github_token, user):
+    repo_data = Repo.objects.filter(user=user)
+
+    for repo in repo_data:
+            commits = requests.get(
+                        f'https://api.github.com/repos/{repo.full_name}/commits',
+                        headers={"Authorization": f"Bearer {github_token}"},
+                    ).json()
+            for commit_data in commits:
+                Commit.objects.update_or_create(
+                    sha = commit_data["sha"],
+                    defaults={
+                        "repo" : repo,
+                        "message": commit_data["commit"]["message"],
+                        "author_name": commit_data["commit"]["author"]["name"],
+                        "author_date": commit_data["commit"]["author"]["date"],
+                        "html_url": commit_data["html_url"],
+                    }
+
+                )
+
