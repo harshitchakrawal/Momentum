@@ -1,8 +1,10 @@
 import Nav from '@/components/nav'
 import Hero from '@/components/hero'
 import Features from '@/components/features'
+import { StaggerTestimonials } from '@/components/ui/stagger-testimonials'
 import CtaSection from '@/components/cta-section'
 import Footer from '@/components/footer'
+import { ProductHighlight } from '@/components/product-highlight'
 
 export default function Home() {
   return (
@@ -10,6 +12,8 @@ export default function Home() {
       <Nav />
       <Hero />
       <Features />
+      <StaggerTestimonials />
+      <ProductHighlight/>
       <CtaSection />
       <Footer />
     </main>

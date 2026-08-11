@@ -48,6 +48,7 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
       <div
         ref={overlayRef}
         aria-hidden="true"
+        suppressHydrationWarning
         style={{
           position: 'fixed',
           inset: 0,

@@ -56,7 +56,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="border-t border-[#1a1a1a] px-6 md:px-30 py-24">
+    <section id="features" className="border-t border-[#1a1a1a] px-6 md:px-30 pt-24 ">
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -65,16 +65,16 @@ export default function Features() {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="mb-14"
       >
-        <p className="text-[11px] font-mono text-[#444] uppercase tracking-[0.15em] mb-5">
+        {/* <p className="text-[11px] font-mono text-[#444] uppercase tracking-[0.15em] mb-5">
           What you get
-        </p>
+        </p> */}
         <h2 className="text-[clamp(2rem,4.5vw,3.25rem)] font-normal leading-[1.08] text-white max-w-2xl"style={{ fontFamily: 'var(--font-display)' }}>
             Everything a developer actually needs
           </h2>
       </motion.div>
 
       {/* Accordion + hand image side by side */}
-      <div className="flex gap-10 items-start">
+      {/* <div className="flex gap-10 items-start">
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -88,7 +88,7 @@ export default function Features() {
           </div>
           
         </motion.div>
-      </div>
+      </div> */}
 
     </section>
   );
