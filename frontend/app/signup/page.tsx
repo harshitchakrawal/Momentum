@@ -10,35 +10,48 @@ const GITHUB_LOGIN_URL = `${API_BASE_URL}/api/auth/github/`
 export default function Signup() {
   const router = useRouter()
 
+  const [step, setStep] = useState<'email'| 'otp'| 'username'>("email") 
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
-    e.preventDefault()
+  async function handleSendOTP(){
+    // e.preventDefault()
+    setError('')
+    setLoading(true)
+    try{
+      const otp = await api.post('/auth/send-otp/', {email})
+      setOtp(otp)
+    }
+    catch(error){
+
+    }
+  }
+  async function handleVerifyOtp() {
     setError('')
     setLoading(true)
 
     try {
-      await api.post('/auth/register/', { username, email, password })
-      router.push('/dashboard')
+       await api.post('/auth/verify-otp/', {email})
+
     } catch (err) {
-      if (isAxiosError(err) && err.response) {
-        const firstError = Object.values(err.response.data)[0]
-        const message = Array.isArray(firstError) ? firstError[0] : 'Registration failed'
-        setError(String(message))
-      } else {
-        setError('Could not reach the server. Is the backend running?')
-      }
-      setLoading(false)
+      
+    }
+  }
+  async function handleCreateUSername(){
+    try{
+      await api.post('/auth/create-username')
     }
   }
 
   return (
     <main className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm flex flex-col items-center">
+      {
+        step == 'email' ? (
+          <div className="w-full max-w-sm flex flex-col items-center">
         <div className="w-12 h-12 rounded-full border border-[#333] flex items-center justify-center mb-6">
           <span className="text-white text-sm font-semibold">M</span>
         </div>
@@ -50,32 +63,15 @@ export default function Signup() {
           Sign up to start tracking your progress.
         </p>
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className="bg-[#0d0d0d] border border-[#222] text-white text-sm py-3 px-4 rounded-md placeholder:text-[#555] focus:outline-none focus:border-[#444]"
-          />
+        <form onSubmit={handleSendOTP} className="w-full flex flex-col gap-3">
           <input
             type="email"
-            placeholder="name@work-email.com"
+            placeholder="example@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             className="bg-[#0d0d0d] border border-[#222] text-white text-sm py-3 px-4 rounded-md placeholder:text-[#555] focus:outline-none focus:border-[#444]"
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="bg-[#0d0d0d] border border-[#222] text-white text-sm py-3 px-4 rounded-md placeholder:text-[#555] focus:outline-none focus:border-[#444]"
-          />
-
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
@@ -115,6 +111,13 @@ export default function Signup() {
           <a href="/login" className="text-[#888] hover:text-white transition-colors font-medium">Log in</a>
         </p>
       </div>
+        ) : step == 'otp' ? (
+
+        ) : step == "username" ? (
+
+        )
+      }
+      
     </main>
   )
 }

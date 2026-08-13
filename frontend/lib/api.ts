@@ -21,7 +21,6 @@ api.interceptors.response.use((response) => response,
           isRefreshing = false
           pendingRequests.forEach((fn) => fn())
           pendingRequests = []
-          
         }
 
         else if(isRefreshing == true){
