@@ -11,6 +11,7 @@ export default function Login() {
   const router = useRouter()
 
   const [email, setEmail] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -38,7 +39,7 @@ export default function Login() {
   
   return (
     <main className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm flex flex-col items-center">
+      {setOtp == true ? (<div className="w-full max-w-sm flex flex-col items-center">
         <div className="w-12 h-12 rounded-full border border-[#333] flex items-center justify-center mb-6">
           <span className="text-white text-sm font-semibold">M</span>
         </div>
@@ -56,14 +57,6 @@ export default function Login() {
             placeholder="name@work-email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
-            className="bg-[#0d0d0d] border border-[#222] text-white text-sm py-3 px-4 rounded-md placeholder:text-[#555] focus:outline-none focus:border-[#444]"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
             className="bg-[#0d0d0d] border border-[#222] text-white text-sm py-3 px-4 rounded-md placeholder:text-[#555] focus:outline-none focus:border-[#444]"
           />
@@ -117,7 +110,9 @@ export default function Login() {
           Don&apos;t have an account?{' '}
           <a href="/signup" className="text-[#888] hover:text-white transition-colors font-medium">Sign up</a>
         </p>
-      </div>
+      </div>) :(
+
+      )}
     </main>
   )
 }

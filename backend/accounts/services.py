@@ -5,6 +5,9 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.contrib.auth import authenticate
 
 from .models import User
+import secrets
+import redis
+redis_client = redis.from_url(settings.REDIS_URL)
 
 
 class AuthenticationError(Exception):
@@ -42,7 +45,6 @@ def refresh_access_token(refresh_token):
         return str(refresh.access_token)
     except (InvalidToken, TokenError):
         raise AuthenticationError("Refresh token expired, please login again")
-
 
 def _fetch_github_access_token(code):
     token_response = requests.post(
@@ -91,8 +93,76 @@ def github_oauth_authenticate(code):
         user.github_token = access_token
         user.save()
     except User.DoesNotExist:
-        user = User.objects.create_user(
-            username=username, email=email, github_id=github_id, github_token=access_token
-        )
+        try:
+            user = User.objects.get(email=email)
+            user.github_id = github_id
+            user.github_token = access_token
+            user.save()
+        except User.DoesNotExist:  
+            user = User.objects.create_user(
+                username=username, email=email, github_id=github_id, github_token=access_token
+            )
 
     return user
+
+def generate_otp():
+    return secrets.randbelow(900000) + 100000
+
+
+def store_otp(email):
+    otp = generate_otp()
+    key = f"email_otp:{email}"    
+
+    redis_client.setex(key,600,otp)
+    return otp
+
+from django.core.mail import send_mail
+
+def send_otp_email(email, otp):
+    send_mail(
+        subject="Momentum Verification Code",
+        message=f"Your Momentum verification code is {otp}. This code expires in 10 minutes.",
+        from_email="noreply@momentum.com",
+        recipient_list=[email],
+    )
+
+def send_otp(email):
+    otp = store_otp(email)
+    send_otp_email(email, otp)
+
+def verify_otp(email,otp):
+
+    key = f"email_otp:{email}"
+    stored_otp = redis_client.get(key)
+
+    if stored_otp is None:
+        return False
+    stored_otp = stored_otp.decode()
+
+    if not stored_otp:
+        return False
+    else:
+        if otp == stored_otp:
+            redis_client.delete(key)
+            return True
+        else:
+            return False
+
+def createusername(email, username):
+    verified_key = f"email_verified:{email}"
+    res = redis_client.get(verified_key)
+    res = res.decode()
+
+    if res == "true":
+        Username = username
+        username_exists = User.objects.filter(username=Username).first()
+        if username_exists is None:
+            user = User.objects.create_user(email=email,username=username)
+            user.set_unusable_password()
+            user.save()
+            redis_client.delete("verified_key")
+            return user
+        else:
+            return False   
+    else:
+        return False

@@ -11,9 +11,9 @@ from .services import (
     wakatime_oauth_authenticate,
     WakatimeOAuthError,
     sync_github_repos,
-    sync_github_commits
+    sync_github_commits,
+    fetch_wakatime_stats,
 )
-
 
 class GithubRepoViews(APIView):
     def get(self, request):
@@ -56,3 +56,9 @@ class WakatimeCallbackView(APIView):
         request.user.save()
 
         return redirect("http://localhost:3000/dashboard")
+    
+class WakatimeStatsView(APIView):
+    def get(self, request):
+        stats = fetch_wakatime_stats(request.user.wakatime_token)
+        return Response(stats)
+    

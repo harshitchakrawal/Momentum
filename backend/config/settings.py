@@ -151,7 +151,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 AUTH_USER_MODEL = "accounts.User"
+REDIS_URL = "redis://localhost:6379/0"
 
 GITHUB_CLIENT_ID = env('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = env('GITHUB_CLIENT_SECRET')

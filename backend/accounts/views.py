@@ -5,7 +5,10 @@ from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .serializers import RegisterSerializer, UserSerializer
+from .models import User
+import redis
+
+from .serializers import RegisterSerializer, UserSerializer, SendOTPSerializer, VerifyOTPSerializer, CreateUserSerializers
 from .services import (
     authenticate_user,
     github_oauth_authenticate,
@@ -13,15 +16,17 @@ from .services import (
     refresh_access_token,
     AuthenticationError,
     GithubOAuthError,
+    send_otp,
+    verify_otp,
+    createusername
 )
-
+redis_client = redis.from_url(settings.REDIS_URL)
 
 def set_auth_cookies(response, access, refresh=None):
     response.set_cookie(key='access_token', value=access, httponly=True, samesite='Lax', secure=False)
     if refresh is not None:
         response.set_cookie(key='refresh_token', value=refresh, httponly=True, samesite='Lax', secure=False)
     return response
-
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
@@ -33,7 +38,6 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
         access, refresh = issue_tokens_for_user(user)
         return set_auth_cookies(Response({"message": "Registered sucessfully"}, status=200), access, refresh)
-
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -47,12 +51,10 @@ class LoginView(APIView):
         access, refresh = issue_tokens_for_user(user)
         return set_auth_cookies(Response({"message": "Login sucessfully"}, status=200), access, refresh)
 
-
 class MeView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
-
 
 class LogoutView(APIView):
     def post(self, request):
@@ -104,4 +106,55 @@ class RefreshView(APIView):
         return set_auth_cookies(response, access)
 
 
+class SendOTPView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self,request):
+        serializer = SendOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data["email"]
+            send_otp(email)
+            return Response({"message":"OTP is send Sucessfully"}, status=200)
+        else:
+            return Response({"message":"Wrong Email Format"}, status=400)    
+
+class VerifyOTPView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = VerifyOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data["email"]
+            otp = serializer.validated_data["otp"]
+            response = verify_otp(email, otp)
+
+            if response is True:
+                user = User.objects.filter(email=email).first()
+                if user is None:
+                    verified_key = f"email_verified:{email}"
+                    redis_client.setex(verified_key, 600, "true")
+                    return Response({"message":"OTP Verified", "user_exists":False}, status=200)
+                else:
+                    access, refresh = issue_tokens_for_user(user)
+                    return Response({ "message":"OTP Verified","user_exists":True, "access":access, "refresh":refresh }, status=200)
+            else:    
+                return Response({"message":"Wrong OTP"}, status=400)
+        else:
+            return Response({"message":"Invalid Email or OTP"}, status=400)
+
+class CreateUsernameView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def post(self, request):
         
+        serializers = CreateUserSerializers(data=request.data)
+        if serializers.is_valid():
+            username = serializers.validated_data["username"]
+            email = serializers.validated_data["email"]
+            user = createusername(email, username)
+            if user is False:
+                return Response({"message":"Verification Expired or Username is taken."}, status=401)
+            else:
+                access, refresh = issue_tokens_for_user(user)
+                return Response({"access":access, "refresh":refresh}, status=200)
+        else:
+            return Response(serializers.errors, status=400)

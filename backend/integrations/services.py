@@ -93,3 +93,9 @@ def sync_github_commits(github_token, user):
                         "html_url": commit_data["html_url"],
                     }
                 )
+def fetch_wakatime_stats(wakatime_token):
+    stats = requests.get("https://wakatime.com/api/v1/users/current/stats/last_7_days",
+                         headers={
+                             "Authorization": f"Bearer {wakatime_token}"
+                         }).json()     
+    return stats

@@ -27,4 +27,15 @@ class UserSerializer(serializers.Serializer):
 
     def get_wakatime_connected(self, obj):
         return bool(obj.wakatime_token)
-       
+
+class SendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()       
+
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()    
+    otp = serializers.CharField(min_length=6, max_length=6)
+
+class CreateUserSerializers(serializers.Serializer):
+    email = serializers.EmailField()
+    username = serializers.CharField(min_length=4)
+    
