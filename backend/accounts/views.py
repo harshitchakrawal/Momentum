@@ -18,7 +18,8 @@ from .services import (
     GithubOAuthError,
     send_otp,
     verify_otp,
-    createusername
+    createusername,
+    TooManyAttemptsError
 )
 redis_client = redis.from_url(settings.REDIS_URL)
 
@@ -37,7 +38,7 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         access, refresh = issue_tokens_for_user(user)
-        return set_auth_cookies(Response({"message": "Registered sucessfully"}, status=200), access, refresh)
+        return set_auth_cookies(Response({"message": "Registered sucessfully"}, status=201), access, refresh)
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -113,7 +114,11 @@ class SendOTPView(APIView):
         serializer = SendOTPSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data["email"]
-            send_otp(email)
+            try:
+                send_otp(email)
+            except TooManyAttemptsError:
+                return Response({"message": "Too many codes requested. Try again later."}, status=429)
+
             return Response({"message":"OTP is send Sucessfully"}, status=200)
         else:
             return Response({"message":"Wrong Email Format"}, status=400)    
@@ -136,7 +141,7 @@ class VerifyOTPView(APIView):
                     return Response({"message":"OTP Verified", "user_exists":False}, status=200)
                 else:
                     access, refresh = issue_tokens_for_user(user)
-                    return Response({ "message":"OTP Verified","user_exists":True, "access":access, "refresh":refresh }, status=200)
+                    return set_auth_cookies(Response({ "message":"OTP Verified","user_exists":True}, status=200), access, refresh)
             else:    
                 return Response({"message":"Wrong OTP"}, status=400)
         else:
@@ -152,9 +157,9 @@ class CreateUsernameView(APIView):
             email = serializers.validated_data["email"]
             user = createusername(email, username)
             if user is False:
-                return Response({"message":"Verification Expired or Username is taken."}, status=401)
+                return Response({"message":"Verification Expired or Username is taken."}, status=409)
             else:
                 access, refresh = issue_tokens_for_user(user)
-                return Response({"access":access, "refresh":refresh}, status=200)
+                return set_auth_cookies(Response({"message": "Account created"}, status=201), access, refresh)
         else:
             return Response(serializers.errors, status=400)

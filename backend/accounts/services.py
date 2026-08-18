@@ -16,6 +16,8 @@ class AuthenticationError(Exception):
 
 class GithubOAuthError(Exception):
     pass
+class TooManyAttemptsError(Exception):
+    pass
 
 
 def issue_tokens_for_user(user):
@@ -127,11 +129,21 @@ def send_otp_email(email, otp):
     )
 
 def send_otp(email):
-    otp = store_otp(email)
+    
+    key = f"otp_send:{email}"
+    count = redis_client.incr(key)
+    if count == 1:
+        redis_client.expire(key,600)
+    if count > 3:
+        raise TooManyAttemptsError 
+    otp = store_otp(email)    
     send_otp_email(email, otp)
+   
+    
+        
 
 def verify_otp(email,otp):
-
+    otp_key = f"otp_attempt:{email}"
     key = f"email_otp:{email}"
     stored_otp = redis_client.get(key)
 
@@ -144,15 +156,22 @@ def verify_otp(email,otp):
     else:
         if otp == stored_otp:
             redis_client.delete(key)
+            redis_client.delete(otp_key)
             return True
         else:
+            count = redis_client.incr(otp_key)
+            if count == 1:
+                redis_client.expire(otp_key, 600)
+            elif count >= 5:
+                redis_client.delete(key)   
             return False
 
 def createusername(email, username):
     verified_key = f"email_verified:{email}"
     res = redis_client.get(verified_key)
+    if not res:
+        return False
     res = res.decode()
-
     if res == "true":
         Username = username
         username_exists = User.objects.filter(username=Username).first()
@@ -160,7 +179,7 @@ def createusername(email, username):
             user = User.objects.create_user(email=email,username=username)
             user.set_unusable_password()
             user.save()
-            redis_client.delete("verified_key")
+            redis_client.delete(verified_key)
             return user
         else:
             return False   
