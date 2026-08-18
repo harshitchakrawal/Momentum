@@ -12,8 +12,8 @@ export default function Home() {
       <Nav />
       <Hero />
       <Features />
-      <StaggerTestimonials />
-      <ProductHighlight/>
+      {/* <StaggerTestimonials /> */}
+      {/* <ProductHighlight/> */}
       <CtaSection />
       <Footer />
     </main>

@@ -2,10 +2,12 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import KineticGrid from '@/components/ui/kinetic-grid'
 
 export default function CtaSection() {
   return (
-    <section className="flex flex-col items-center justify-center min-h-screen px-6 text-center border-t border-[#1a1a1a]">
+    <KineticGrid globalColor="monochrome" className="border-t border-[#1a1a1a] bg-[#0a0a0a]">
+      <section className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
       <motion.h1
         initial={{ opacity: 0, y: 36 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -39,6 +41,7 @@ export default function CtaSection() {
           See how it works
         </Link>
       </motion.div>
-    </section>
+      </section>
+    </KineticGrid>
   )
 }

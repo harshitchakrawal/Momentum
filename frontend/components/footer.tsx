@@ -74,6 +74,7 @@ export default function Footer() {
       <div className="relative flex items-end justify-between">
         <p
           className="text-[clamp(5rem,18vw,14rem)] font-bold leading-none tracking-tight text-[#1a1a1a] select-none pointer-events-none"
+          style={{ fontFamily: 'var(--font-ranade)' }}
           aria-hidden
         >
           Momentum

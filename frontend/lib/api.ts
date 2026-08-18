@@ -1,7 +1,10 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 
-let isRefreshing = false
-let pendingRequests: (() => void)[] = [];
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    skipAuthRefresh?: boolean
+  }
+}
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -10,35 +13,71 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.response.use((response) => response,
-  async (error) => {
-    if (error.response?.status === 401 && !error.config.url.includes('/auth/refresh/') && !error.config._retry){
-      error.config._retry = true
-      try{
-        if (isRefreshing == false){
-          isRefreshing = true
-          const res = await api.post('/auth/refresh/')
-          isRefreshing = false
-          pendingRequests.forEach((fn) => fn())
-          pendingRequests = []
-        }
+let isRefreshing = false
 
-        else if(isRefreshing == true){
-          return new Promise((resolve, reject) => {
-            pendingRequests.push(() =>{
-              api(error.config).then(resolve, reject)
-            })
-          })
-        }          
+// Requests that hit a 401 while a refresh was already in flight. They wait
+// here instead of each firing their own refresh.
+let queue: {
+  config: AxiosRequestConfig
+  resolve: (value: unknown) => void
+  reject: (reason: unknown) => void
+}[] = []
 
-        return api(error.config)
-      }
-      catch(e){
-        window.location.href = '/login'
-        return Promise.reject(error)
-      }
-    }
-    else{
-      return Promise.reject(error)
-    }
+
+  // Settle everything that was waiting on the refresh. Passing an error rejects
+  // them — leaving them unsettled would hang the caller forever.
+ 
+function flushQueue(error: unknown) {
+  const waiting = queue
+  queue = []
+
+  waiting.forEach(({ config, resolve, reject }) => {
+    if (error) reject(error)
+    else api(config).then(resolve, reject)
   })
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config
+
+    // A refresh that itself 401s must not be retried, or we loop forever.
+    const canRetry =
+      error.response?.status === 401 &&
+      config &&
+      !config.skipAuthRefresh &&
+      !config.url?.includes('/auth/refresh/') &&
+      !config._retry
+
+    if (!canRetry) return Promise.reject(error)
+
+    config._retry = true
+
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        queue.push({ config, resolve, reject })
+      })
+    }
+
+    isRefreshing = true
+
+    try {
+      await api.post('/auth/refresh/')
+      flushQueue(null)
+      return api(config)
+    } catch (refreshError) {
+      flushQueue(refreshError)
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
+      return Promise.reject(error)
+    } finally {
+      // Must run on failure too, otherwise every later 401 queues up behind a
+      // refresh that will never happen.
+      isRefreshing = false
+    }
+  }
+)
+
+export const fetcher = (url: string) => api.get(url).then((res) => res.data)
