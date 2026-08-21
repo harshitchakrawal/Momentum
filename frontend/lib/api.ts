@@ -24,9 +24,6 @@ let queue: {
 }[] = []
 
 
-  // Settle everything that was waiting on the refresh. Passing an error rejects
-  // them — leaving them unsettled would hang the caller forever.
- 
 function flushQueue(error: unknown) {
   const waiting = queue
   queue = []
