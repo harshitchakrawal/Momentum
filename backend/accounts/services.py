@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -9,10 +11,13 @@ import secrets
 import redis
 redis_client = redis.from_url(settings.REDIS_URL)
 
+logger = logging.getLogger(__name__)
+
+EXTERNAL_TIMEOUT = 10
+
 
 class AuthenticationError(Exception):
     pass
-
 
 class GithubOAuthError(Exception):
     pass
@@ -49,15 +54,25 @@ def refresh_access_token(refresh_token):
         raise AuthenticationError("Refresh token expired, please login again")
 
 def _fetch_github_access_token(code):
-    token_response = requests.post(
-        "https://github.com/login/oauth/access_token",
-        headers={"Accept": "application/json"},
-        data={
-            "client_id": settings.GITHUB_CLIENT_ID,
-            "client_secret": settings.GITHUB_CLIENT_SECRET,
-            "code": code,
-        },
-    )
+    try:
+        token_response = requests.post(
+            "https://github.com/login/oauth/access_token",
+            headers={"Accept": "application/json"},
+            data={
+                "client_id": settings.GITHUB_CLIENT_ID,
+                "client_secret": settings.GITHUB_CLIENT_SECRET,
+                "code": code,
+            },
+            timeout=EXTERNAL_TIMEOUT,
+        )
+        # Turns a 4xx/5xx into an exception instead of letting the error body
+        # flow on as if it were a real payload.
+        token_response.raise_for_status()
+    # Parent class, so this also covers Timeout and ConnectionError.
+    except requests.exceptions.RequestException as e:
+        logger.warning("GitHub token exchange failed: %s", e)
+        raise GithubOAuthError("Could not reach GitHub. Try again.")
+
     access_token = token_response.json().get("access_token")
     if not access_token:
         raise GithubOAuthError("Could not obtain GitHub access token")
@@ -65,19 +80,32 @@ def _fetch_github_access_token(code):
 
 
 def _fetch_github_profile(access_token):
-    profile_response = requests.get(
-        "https://api.github.com/user",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-    return profile_response.json()
+    try:
+        profile_response = requests.get(
+            "https://api.github.com/user",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=EXTERNAL_TIMEOUT,
+        )
+        profile_response.raise_for_status()
+        return profile_response.json()
+    except requests.exceptions.RequestException as e:
+        logger.warning("GitHub profile fetch failed: %s", e)
+        raise GithubOAuthError("Could not read your GitHub profile.")
 
 
 def _fetch_github_primary_email(access_token):
-    email_response = requests.get(
-        "https://api.github.com/user/emails",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-    emails = email_response.json()
+    try:
+        email_response = requests.get(
+            "https://api.github.com/user/emails",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=EXTERNAL_TIMEOUT,
+        )
+        email_response.raise_for_status()
+        emails = email_response.json()
+    except requests.exceptions.RequestException as e:
+        logger.warning("GitHub email fetch failed: %s", e)
+        raise GithubOAuthError("Could not read your GitHub email.")
+
     primary = next((e for e in emails if e.get("primary")), None)
     return primary["email"] if primary else None
 

@@ -1,18 +1,37 @@
+import logging
+
 import requests
 from django.conf import settings
 from .models import Repo, Commit
 
+logger = logging.getLogger(__name__)
+
+# Seconds to wait on any outbound HTTP call. Without this `requests` waits
+# forever, so one hung upstream can pin a worker until the process is restarted.
+EXTERNAL_TIMEOUT = 10
+
 
 class WakatimeOAuthError(Exception):
+    pass
+class GithubApiError(Exception):
+    pass
+class WakatimeApiError(Exception):
     pass
 
 
 def fetch_github_repos(github_token):
-    response = requests.get(
-        'https://api.github.com/user/repos',
-        headers={"Authorization": f"Bearer {github_token}"},
-    )
-    return response.json()
+    try:
+        response = requests.get(
+            'https://api.github.com/user/repos',
+            headers={"Authorization": f"Bearer {github_token}"},
+            timeout=EXTERNAL_TIMEOUT,
+        )
+        response.raise_for_status()
+        return response.json()
+    # Parent class, so this also covers Timeout and ConnectionError.
+    except requests.exceptions.RequestException as e:
+        logger.warning("GitHub repo fetch failed: %s", e)
+        raise GithubApiError("Could not reach GitHub. Try reconnecting your account.")
 
 
 def fetch_github_commits(github_token, repo_limit=5, commit_limit=15):
@@ -21,11 +40,19 @@ def fetch_github_commits(github_token, repo_limit=5, commit_limit=15):
     all_commits = []
 
     for repo in top_repos:
-        commit_response = requests.get(
-            f'https://api.github.com/repos/{repo["full_name"]}/commits',
-            headers={"Authorization": f"Bearer {github_token}"},
-        )
-        all_commits.extend(commit_response.json())
+        # One unreadable repo (deleted, renamed, permissions changed) should not
+        # cost the user every other repo's commits.
+        try:
+            commit_response = requests.get(
+                f'https://api.github.com/repos/{repo["full_name"]}/commits',
+                headers={"Authorization": f"Bearer {github_token}"},
+                timeout=EXTERNAL_TIMEOUT,
+            )
+            commit_response.raise_for_status()
+            all_commits.extend(commit_response.json())
+        except requests.exceptions.RequestException as e:
+            logger.warning("Skipped commits for %s: %s", repo["full_name"], e)
+            continue
 
     sorted_commits = sorted(
         all_commits,
@@ -37,17 +64,24 @@ def fetch_github_commits(github_token, repo_limit=5, commit_limit=15):
 
 
 def _fetch_wakatime_access_token(code):
-    token_response = requests.post(
-        "https://wakatime.com/oauth/token",
-        headers={"Accept": "application/json"},
-        data={
-            "client_id": settings.WAKATIME_CLIENT_ID,
-            "client_secret": settings.WAKATIME_CLIENT_SECRET,
-            "redirect_uri": "http://localhost:8000/api/wakatime/callback/",
-            "grant_type": "authorization_code",
-            "code": code,
-        },
-    )
+    try:
+        token_response = requests.post(
+            "https://wakatime.com/oauth/token",
+            headers={"Accept": "application/json"},
+            data={
+                "client_id": settings.WAKATIME_CLIENT_ID,
+                "client_secret": settings.WAKATIME_CLIENT_SECRET,
+                "redirect_uri": "http://localhost:8000/api/wakatime/callback/",
+                "grant_type": "authorization_code",
+                "code": code,
+            },
+            timeout=EXTERNAL_TIMEOUT,
+        )
+        token_response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.warning("WakaTime token exchange failed: %s", e)
+        raise WakatimeOAuthError("Could not reach WakaTime. Try again.")
+
     access_token = token_response.json().get("access_token")
     if not access_token:
         raise WakatimeOAuthError("Could not obtain wakatime token")
@@ -78,10 +112,18 @@ def sync_github_commits(github_token, user):
     repo_data = Repo.objects.filter(user=user)
 
     for repo in repo_data:
-            commits = requests.get(
+            try:
+                commit_response = requests.get(
                         f'https://api.github.com/repos/{repo.full_name}/commits',
                         headers={"Authorization": f"Bearer {github_token}"},
-                    ).json()
+                        timeout=EXTERNAL_TIMEOUT,
+                    )
+                commit_response.raise_for_status()
+                commits = commit_response.json()
+            except requests.exceptions.RequestException as e:
+                logger.warning("Skipped commit sync for %s: %s", repo.full_name, e)
+                continue
+
             for commit_data in commits:
                 Commit.objects.update_or_create(
                     sha = commit_data["sha"],
@@ -94,8 +136,14 @@ def sync_github_commits(github_token, user):
                     }
                 )
 def fetch_wakatime_stats(wakatime_token):
-    stats = requests.get("https://wakatime.com/api/v1/users/current/stats/last_7_days",
-                         headers={
-                             "Authorization": f"Bearer {wakatime_token}"
-                         }).json()     
-    return stats
+    try:
+        response = requests.get("https://wakatime.com/api/v1/users/current/stats/last_7_days",
+                                headers={
+                                    "Authorization": f"Bearer {wakatime_token}"
+                                },
+                                timeout=EXTERNAL_TIMEOUT)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.warning("WakaTime stats fetch failed: %s", e)
+        raise WakatimeApiError("Could not reach WakaTime. Try reconnecting your account.")

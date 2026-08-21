@@ -10,23 +10,37 @@ from .services import (
     fetch_github_commits,
     wakatime_oauth_authenticate,
     WakatimeOAuthError,
+    WakatimeApiError,
+    GithubApiError,
     sync_github_repos,
     sync_github_commits,
     fetch_wakatime_stats,
 )
 
+# 502 rather than 401: the caller's session is fine, the upstream provider is
+# what failed. A 401 here would make the frontend log the user out entirely.
+UPSTREAM_FAILED = 502
+
+
 class GithubRepoViews(APIView):
     def get(self, request):
-        sync_github_repos(request.user.github_token, request.user)
+        try:
+            sync_github_repos(request.user.github_token, request.user)
+        except GithubApiError as e:
+            return Response({"error": str(e)}, status=UPSTREAM_FAILED)
 
-        repos = Repo.objects.filter(user=request.user)   
+        repos = Repo.objects.filter(user=request.user)
         serializer = RepoSerializer(repos, many=True)
         return Response(serializer.data)
-        
+
 
 class GithubCommitViews(APIView):
     def get(self, request):
-        sync_github_commits(request.user.github_token, request.user)
+        try:
+            sync_github_commits(request.user.github_token, request.user)
+        except GithubApiError as e:
+            return Response({"error": str(e)}, status=UPSTREAM_FAILED)
+
         commit = Commit.objects.filter(repo__user=request.user)
         serializer = CommitSerializer(commit, many=True)
         return Response(serializer.data)
@@ -59,6 +73,10 @@ class WakatimeCallbackView(APIView):
     
 class WakatimeStatsView(APIView):
     def get(self, request):
-        stats = fetch_wakatime_stats(request.user.wakatime_token)
+        try:
+            stats = fetch_wakatime_stats(request.user.wakatime_token)
+        except WakatimeApiError as e:
+            return Response({"error": str(e)}, status=UPSTREAM_FAILED)
+
         return Response(stats)
     
