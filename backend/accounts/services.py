@@ -135,19 +135,6 @@ def github_oauth_authenticate(code):
 
     return user
 
-def create_oauth_state(user_id, provider):
-    state = secrets.token_urlsafe(32)
-    redis_client.setex(f"oauth_state:{provider}:{state}", 600, str(user_id))
-    return state
-
-
-def consume_oauth_state(state, provider):
-    if not state:
-        return None
-    value = redis_client.getdel(f"oauth_state:{provider}:{state}")
-    return value.decode() if value else None
-
-
 def link_github_account(user, code):
     access_token = _fetch_github_access_token(code)
     profile = _fetch_github_profile(access_token)
@@ -162,6 +149,19 @@ def link_github_account(user, code):
         return user
     except IntegrityError:
         raise GithubAlreadyLinkedError("This GitHub account is already linked to another Momentum account.")
+
+
+def create_oauth_state(user_id, provider):
+    state = secrets.token_urlsafe(32)
+    redis_client.setex(f"oauth_state:{provider}:{state}", 600, str(user_id))
+    return state
+
+
+def consume_oauth_state(state, provider):
+    if not state:
+        return None
+    value = redis_client.getdel(f"oauth_state:{provider}:{state}")
+    return value.decode() if value else None
 
 def generate_otp():
     return secrets.randbelow(900000) + 100000

@@ -16,10 +16,14 @@ from .services import (
     refresh_access_token,
     AuthenticationError,
     GithubOAuthError,
+    GithubAlreadyLinkedError,
     send_otp,
     verify_otp,
     createusername,
-    TooManyAttemptsError
+    TooManyAttemptsError,
+    create_oauth_state,
+    consume_oauth_state,
+    link_github_account
 )
 redis_client = redis.from_url(settings.REDIS_URL)
 
@@ -163,3 +167,44 @@ class CreateUsernameView(APIView):
                 return set_auth_cookies(Response({"message": "Account created"}, status=201), access, refresh)
         else:
             return Response(serializers.errors, status=400)
+
+FRONTEND_DASHBOARD = "http://localhost:3000/dashboard"
+
+
+class GithubConnectView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        state = create_oauth_state(request.user.id, "github")
+        github_authorise_url = (
+            "https://github.com/login/oauth/authorize"
+            f"?client_id={settings.GITHUB_CLIENT_ID}"
+            "&redirect_uri=http://localhost:8000/api/auth/github/connect/callback/"
+            "&scope=read:user,user:email,repo"
+            f"&state={state}"
+            "&allow_signup=false"
+        )
+        return redirect(github_authorise_url)
+
+
+class GithubConnectCallbackView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        user_id = consume_oauth_state(request.GET.get('state'), "github")
+        if user_id is None:
+            return redirect(f"{FRONTEND_DASHBOARD}?error=invalid_state")
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return redirect(f"{FRONTEND_DASHBOARD}?error=invalid_state")
+
+        try:
+            link_github_account(user, request.GET.get('code'))
+        except GithubAlreadyLinkedError:
+            return redirect(f"{FRONTEND_DASHBOARD}?error=github_already_linked")
+        except GithubOAuthError:
+            return redirect(f"{FRONTEND_DASHBOARD}?error=github_failed")
+
+        return redirect(FRONTEND_DASHBOARD)
