@@ -106,7 +106,7 @@ def _fetch_github_primary_email(access_token):
         logger.warning("GitHub email fetch failed: %s", e)
         raise GithubOAuthError("Could not read your GitHub email.")
 
-    primary = next((e for e in emails if e.get("primary")) and e.get("primary"), None)
+    primary = next((e for e in emails if e.get("primary") and e.get("verified")), None)
     return primary["email"] if primary else None
 
 
@@ -134,6 +134,18 @@ def github_oauth_authenticate(code):
             )
 
     return user
+
+def create_oauth_state(user_id, provider):
+    state = secrets.token_urlsafe(32)
+    redis_client.setex(f"oauth_state:{provider}:{state}", 600, str(user_id))
+    return state
+
+
+def consume_oauth_state(state, provider):
+    if not state:
+        return None
+    value = redis_client.getdel(f"oauth_state:{provider}:{state}")
+    return value.decode() if value else None
 
 
 def link_github_account(user, code):
