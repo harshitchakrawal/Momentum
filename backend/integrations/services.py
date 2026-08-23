@@ -6,8 +6,6 @@ from .models import Repo, Commit
 
 logger = logging.getLogger(__name__)
 
-# Seconds to wait on any outbound HTTP call. Without this `requests` waits
-# forever, so one hung upstream can pin a worker until the process is restarted.
 EXTERNAL_TIMEOUT = 10
 
 
@@ -40,8 +38,6 @@ def fetch_github_commits(github_token, repo_limit=5, commit_limit=15):
     all_commits = []
 
     for repo in top_repos:
-        # One unreadable repo (deleted, renamed, permissions changed) should not
-        # cost the user every other repo's commits.
         try:
             commit_response = requests.get(
                 f'https://api.github.com/repos/{repo["full_name"]}/commits',
@@ -95,10 +91,12 @@ def sync_github_repos(github_token, user):
     repos = fetch_github_repos(github_token)
 
     for repo_data in repos:
+        # Both fields go in the lookup: "this user's copy of this repo",
+        # not "whoever owns this repo id".
         Repo.objects.update_or_create(
+            user=user,
             github_repo_id=repo_data["id"],
             defaults={
-                "user": user,
                 "name": repo_data["name"],
                 "full_name": repo_data["full_name"],
                 "html_url": repo_data["html_url"],
@@ -126,9 +124,9 @@ def sync_github_commits(github_token, user):
 
             for commit_data in commits:
                 Commit.objects.update_or_create(
-                    sha = commit_data["sha"],
+                    repo=repo,
+                    sha=commit_data["sha"],
                     defaults={
-                        "repo" : repo,
                         "message": commit_data["commit"]["message"],
                         "author_name": commit_data["commit"]["author"]["name"],
                         "author_date": commit_data["commit"]["author"]["date"],
@@ -138,6 +136,19 @@ def sync_github_commits(github_token, user):
 def fetch_wakatime_stats(wakatime_token):
     try:
         response = requests.get("https://wakatime.com/api/v1/users/current/stats/last_7_days",
+                                headers={
+                                    "Authorization": f"Bearer {wakatime_token}"
+                                },
+                                timeout=EXTERNAL_TIMEOUT)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.warning("WakaTime stats fetch failed: %s", e)
+        raise WakatimeApiError("Could not reach WakaTime. Try reconnecting your account.")
+    
+def fetch_wakatime_todaygraph(wakatime_token):
+    try:
+        response = requests.get("https://wakatime.com/api/v1/users/current/status_bar/today",
                                 headers={
                                     "Authorization": f"Bearer {wakatime_token}"
                                 },

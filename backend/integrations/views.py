@@ -15,6 +15,7 @@ from .services import (
     sync_github_repos,
     sync_github_commits,
     fetch_wakatime_stats,
+    fetch_wakatime_todaygraph,
 )
 
 # 502 rather than 401: the caller's session is fine, the upstream provider is
@@ -75,6 +76,15 @@ class WakatimeStatsView(APIView):
     def get(self, request):
         try:
             stats = fetch_wakatime_stats(request.user.wakatime_token)
+        except WakatimeApiError as e:
+            return Response({"error": str(e)}, status=UPSTREAM_FAILED)
+
+        return Response(stats)
+    
+class WakatimeTodayStatsView(APIView):
+    def get(self, request):
+        try:
+            stats = fetch_wakatime_todaygraph(request.user.wakatime_token)
         except WakatimeApiError as e:
             return Response({"error": str(e)}, status=UPSTREAM_FAILED)
 

@@ -5,6 +5,7 @@ from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.contrib.auth import authenticate
+from django.db import IntegrityError
 
 from .models import User
 import secrets
@@ -24,6 +25,8 @@ class GithubOAuthError(Exception):
 class TooManyAttemptsError(Exception):
     pass
 
+class GithubAlreadyLinkedError(Exception):
+    pass
 
 def issue_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -65,10 +68,7 @@ def _fetch_github_access_token(code):
             },
             timeout=EXTERNAL_TIMEOUT,
         )
-        # Turns a 4xx/5xx into an exception instead of letting the error body
-        # flow on as if it were a real payload.
         token_response.raise_for_status()
-    # Parent class, so this also covers Timeout and ConnectionError.
     except requests.exceptions.RequestException as e:
         logger.warning("GitHub token exchange failed: %s", e)
         raise GithubOAuthError("Could not reach GitHub. Try again.")
@@ -106,7 +106,7 @@ def _fetch_github_primary_email(access_token):
         logger.warning("GitHub email fetch failed: %s", e)
         raise GithubOAuthError("Could not read your GitHub email.")
 
-    primary = next((e for e in emails if e.get("primary")), None)
+    primary = next((e for e in emails if e.get("primary")) and e.get("primary"), None)
     return primary["email"] if primary else None
 
 
@@ -134,6 +134,22 @@ def github_oauth_authenticate(code):
             )
 
     return user
+
+
+def link_github_account(user, code):
+    access_token = _fetch_github_access_token(code)
+    profile = _fetch_github_profile(access_token)
+    github_id = str(profile['id'])
+    if User.objects.filter(github_id=github_id).exclude(pk=user.pk).exists():
+        raise GithubAlreadyLinkedError("This GitHub account is already linked to another Momentum account.")
+
+    user.github_id = github_id
+    user.github_token = access_token
+    try:
+        user.save(update_fields=["github_id","github_token"])
+        return user
+    except IntegrityError:
+        raise GithubAlreadyLinkedError("This GitHub account is already linked to another Momentum account.")
 
 def generate_otp():
     return secrets.randbelow(900000) + 100000
