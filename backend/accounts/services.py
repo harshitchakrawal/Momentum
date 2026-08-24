@@ -171,28 +171,32 @@ def store_otp(email):
     otp = generate_otp()
     key = f"email_otp:{email}"    
 
-    redis_client.setex(key,600,otp)
+    redis_client.setex(key, settings.OTP_TTL_SECONDS, otp)
     return otp
 
 from django.core.mail import send_mail
 
 def send_otp_email(email, otp):
+    minutes = settings.OTP_TTL_SECONDS // 60
     send_mail(
         subject="Momentum Verification Code",
-        message=f"Your Momentum verification code is {otp}. This code expires in 10 minutes.",
+        message=f"Your Momentum verification code is {otp}. This code expires in {minutes} minutes.",
         from_email="noreply@momentum.com",
         recipient_list=[email],
     )
 
 def send_otp(email):
-    
     key = f"otp_send:{email}"
-    count = redis_client.incr(key)
-    if count == 1:
-        redis_client.expire(key,600)
-    if count > 3:
-        raise TooManyAttemptsError 
-    otp = store_otp(email)    
+
+    pipeline = redis_client.pipeline()
+    pipeline.incr(key)
+    pipeline.expire(key, settings.OTP_SEND_WINDOW_SECONDS, nx=True)
+    count = pipeline.execute()[0]
+
+    if count > settings.OTP_SEND_LIMIT:
+        raise TooManyAttemptsError
+
+    otp = store_otp(email)
     send_otp_email(email, otp)
    
     

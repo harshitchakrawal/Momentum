@@ -27,6 +27,9 @@ from .services import (
 )
 redis_client = redis.from_url(settings.REDIS_URL)
 
+FRONTEND_DASHBOARD = "http://localhost:3000/dashboard"
+
+
 def set_auth_cookies(response, access, refresh=None):
     response.set_cookie(key='access_token', value=access, httponly=True, samesite='Lax', secure=False)
     if refresh is not None:
@@ -167,8 +170,6 @@ class CreateUsernameView(APIView):
                 return set_auth_cookies(Response({"message": "Account created"}, status=201), access, refresh)
         else:
             return Response(serializers.errors, status=400)
-
-FRONTEND_DASHBOARD = "http://localhost:3000/dashboard"
 
 
 class GithubConnectView(APIView):
