@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { Suspense, useMemo } from 'react'
 import useSWR from 'swr'
-import { API_BASE_URL, fetcher } from '@/lib/api'
+import { useSearchParams } from 'next/navigation'
+import { API_BASE_URL, fetcher, startOAuthConnect } from '@/lib/api'
 import { useDashboardUser } from './layout'
 import {
   countByDay,
@@ -13,7 +14,10 @@ import {
 import StatTile from '@/components/dashboard/stat-tile'
 import ContributionHeatmap from '@/components/dashboard/contribution-heatmap'
 import LanguageBreakdown from '@/components/dashboard/language-breakdown'
-import WakatimePanel, { type WakatimeStats } from '@/components/dashboard/wakatime-panel'
+import WakatimePanel, {
+  type WakatimeStats,
+  type WakatimeToday,
+} from '@/components/dashboard/wakatime-panel'
 import {
   StatTileSkeleton,
   HeatmapSkeleton,
@@ -48,8 +52,16 @@ export default function Dashboard() {
 
   // Cached by SWR, so leaving the page and coming back renders from cache
   // instead of re-hitting GitHub.
-  const { data: reposData, error: reposError, isLoading: reposLoading } = useSWR<Repo[]>('/github/repos/', fetcher)
-  const { data: commitsData, isLoading: commitsLoading } = useSWR<Commit[]>('/github/commits/', fetcher)
+  const {
+    data: reposData,
+    error: reposError,
+    isLoading: reposLoading,
+    mutate: retryRepos,
+  } = useSWR<Repo[]>(user?.github_connected ? '/github/repos/' : null, fetcher)
+  const { data: commitsData, isLoading: commitsLoading } = useSWR<Commit[]>(
+    user?.github_connected ? '/github/commits/' : null,
+    fetcher,
+  )
 
   // Passing null as the key tells SWR not to fetch at all — no point asking for
   // stats the user has no token for.
@@ -57,9 +69,20 @@ export default function Dashboard() {
     user?.wakatime_connected ? '/wakatime/stats/' : null,
     fetcher,
   )
+  const { data: todayData } = useSWR<WakatimeToday>(
+    user?.wakatime_connected ? '/wakatime/today/' : null,
+    fetcher,
+  )
 
-  // The endpoints only fail here when GitHub was never linked.
-  const githubConnected = !reposError
+  // Hours as a short decimal — "2.5 hrs" fits a tile, "2 hrs 30 mins" does not.
+  // The exact wording still shows as the hint underneath.
+  const todayTotal = todayData?.data?.grand_total
+  const todayHours =
+    todayTotal?.total_seconds != null
+      ? Math.round((todayTotal.total_seconds / 3600) * 10) / 10
+      : null
+
+  const githubConnected = user?.github_connected ?? false
   const repos = useMemo(() => (Array.isArray(reposData) ? reposData : []), [reposData])
   const commits = useMemo(() => (Array.isArray(commitsData) ? commitsData : []), [commitsData])
 
@@ -97,22 +120,50 @@ export default function Dashboard() {
 
   const loading = reposLoading || commitsLoading
 
-  if (!reposLoading && !githubConnected) {
+  if (!githubConnected) {
     return (
       <>
         <Greeting username={user?.username} email={user?.email} />
+        <Suspense fallback={null}>
+          <ConnectAlert />
+        </Suspense>
         <div className="rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] p-10 text-center">
           <p className="text-[15px] text-white">Connect GitHub to get started</p>
           <p className="mx-auto mt-2 max-w-sm text-[13px] text-[#666]">
             Momentum reads your repositories and commit history to build your
             activity timeline. Nothing is written back.
           </p>
-          <a
-            href={`${API_BASE_URL}/api/auth/github/`}
+          <button
+            type="button"
+            onClick={() =>
+              startOAuthConnect(`${API_BASE_URL}/api/auth/github/connect/`)
+            }
             className="mt-6 inline-block rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#e5e5e5]"
           >
             Connect GitHub
-          </a>
+          </button>
+        </div>
+      </>
+    )
+  }
+
+  if (reposError) {
+    return (
+      <>
+        <Greeting username={user?.username} email={user?.email} />
+        <div className="rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] p-10 text-center">
+          <p className="text-[15px] text-white">GitHub isn&apos;t responding</p>
+          <p className="mx-auto mt-2 max-w-sm text-[13px] text-[#666]">
+            Your account is still connected — GitHub just didn&apos;t answer in
+            time. This usually clears up on its own.
+          </p>
+          <button
+            type="button"
+            onClick={() => retryRepos()}
+            className="mt-6 inline-block rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#e5e5e5]"
+          >
+            Try again
+          </button>
         </div>
       </>
     )
@@ -125,6 +176,10 @@ export default function Dashboard() {
         email={user?.email}
         streak={loading ? 0 : metrics.current}
       />
+
+      <Suspense fallback={null}>
+        <ConnectAlert />
+      </Suspense>
 
       {/* Summary ------------------------------------------------------- */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -143,11 +198,21 @@ export default function Dashboard() {
               unit={metrics.current === 1 ? 'day' : 'days'}
               hint={`Longest ${metrics.longest}`}
             />
-            <StatTile
-              label="Active repos"
-              value={metrics.active}
-              hint={`of ${repos.length} total`}
-            />
+            {todayHours === null ? (
+              // No WakaTime, no hours to show — keep the slot useful.
+              <StatTile
+                label="Active repos"
+                value={metrics.active}
+                hint={`of ${repos.length} total`}
+              />
+            ) : (
+              <StatTile
+                label="Coding today"
+                value={todayHours}
+                unit="hrs"
+                hint={todayTotal?.text ?? 'Nothing tracked yet'}
+              />
+            )}
             <StatTile
               label="Commits tracked"
               value={commits.length}
@@ -174,12 +239,15 @@ export default function Dashboard() {
               Connect WakaTime to see how long you actually spend coding, broken
               down by language and project.
             </p>
-            <a
-              href={`${API_BASE_URL}/api/wakatime/connect/`}
+            <button
+              type="button"
+              onClick={() =>
+                startOAuthConnect(`${API_BASE_URL}/api/wakatime/connect/`)
+              }
               className="mt-4 inline-block rounded-md border border-[#2a2a2a] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-white/4"
             >
               Connect WakaTime
-            </a>
+            </button>
           </section>
         ) : wakatimeLoading ? (
           <PanelSkeleton rows={4} />
@@ -277,6 +345,27 @@ export default function Dashboard() {
         )}
       </section>
     </>
+  )
+}
+
+const CONNECT_ERRORS: Record<string, string> = {
+  invalid_state:
+    'That connection attempt expired before it finished. Please try again.',
+  github_already_linked:
+    'That GitHub account is already linked to another Momentum account. Disconnect it there first.',
+  github_failed: 'Could not reach GitHub. Please try again in a moment.',
+}
+
+function ConnectAlert() {
+  const error = useSearchParams().get('error')
+  const message = error ? CONNECT_ERRORS[error] : null
+
+  if (!message) return null
+
+  return (
+    <div className="mb-4 rounded-lg border border-[#3a1f1f] bg-[#180f0f] px-4 py-3">
+      <p className="text-[13px] text-[#e5a3a3]">{message}</p>
+    </div>
   )
 }
 

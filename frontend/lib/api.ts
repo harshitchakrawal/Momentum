@@ -78,3 +78,14 @@ api.interceptors.response.use(
 )
 
 export const fetcher = (url: string) => api.get(url).then((res) => res.data)
+
+export async function startOAuthConnect(connectUrl: string) {
+  try {
+    await api.post('/auth/refresh/')
+  } catch {
+    window.location.href = '/login'
+    return
+  }
+
+  window.location.href = connectUrl
+}

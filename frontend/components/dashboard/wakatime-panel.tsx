@@ -143,3 +143,14 @@ export default function WakatimePanel({ stats }: { stats: WakatimeStats }) {
     </section>
   )
 }
+
+/** WakaTime's `status_bar/today` payload, narrowed to the grand total. */
+export interface WakatimeToday {
+  data?: {
+    grand_total?: {
+      /** Pre-formatted, e.g. "2 hrs 30 mins". */
+      text?: string
+      total_seconds?: number
+    }
+  }
+}

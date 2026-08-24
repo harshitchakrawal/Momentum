@@ -15,7 +15,7 @@ import {
   ChevronRightIcon,
   ExitIcon,
 } from '@radix-ui/react-icons'
-import { api, API_BASE_URL } from '@/lib/api'
+import { api, API_BASE_URL, startOAuthConnect } from '@/lib/api'
 
 interface SidebarUser {
   username: string
@@ -40,7 +40,7 @@ const PLUGINS = [
   {
     label: 'GitHub',
     connection: 'github_connected',
-    connectHref: `${API_BASE_URL}/api/auth/github/`,
+    connectHref: `${API_BASE_URL}/api/auth/github/connect/`,
   },
   {
     label: 'WakaTime',
@@ -96,9 +96,14 @@ function PluginRow({
   // Only an unconnected plugin has somewhere to go.
   if (state === 'disconnected') {
     return (
-      <a href={connectHref} title={`Connect ${label}`} className={`${className} hover:bg-white/4`}>
+      <button
+        type="button"
+        onClick={() => startOAuthConnect(connectHref!)}
+        title={`Connect ${label}`}
+        className={`${className} w-full text-left hover:bg-white/4`}
+      >
         {body}
-      </a>
+      </button>
     )
   }
 
