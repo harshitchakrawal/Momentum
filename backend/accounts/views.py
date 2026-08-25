@@ -216,3 +216,4 @@ class GithubDisconnectView(APIView):
 
     def post(self, request):
         unlink_github_account(request.user)
+        return Response({"message":"GithubDisconnected Sucessfully"}, status=200)

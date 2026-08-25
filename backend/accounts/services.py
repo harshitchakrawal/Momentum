@@ -165,12 +165,14 @@ def revoke_github_token(access_token):
         logger.warning("Failed to revoke GitHub authorization: %s", e)    
     
 def unlink_github_account(user):
-    github_token = user.github_token
-    if github_token:
-        revoke_github_token()
-        user.github_id = None
-        user.github_token = None
-        user.save(updated_fields=["github_id", "github_token"])
+    if user.github_token:
+        revoke_github_token(user.github_token)
+
+    user.github_id = None
+    user.github_token = None
+    user.save(update_fields=["github_id", "github_token"])
+    return user
+    
     
 def create_oauth_state(user_id, provider):
     state = secrets.token_urlsafe(32)

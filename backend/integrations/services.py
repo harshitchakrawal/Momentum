@@ -87,6 +87,31 @@ def _fetch_wakatime_access_token(code):
 def wakatime_oauth_authenticate(code):
     return _fetch_wakatime_access_token(code)
 
+
+def revoke_wakatime_token(token):
+    try:
+        response = requests.post(
+            "https://wakatime.com/oauth/revoke",
+            data={
+                "client_id": settings.WAKATIME_CLIENT_ID,
+                "client_secret": settings.WAKATIME_CLIENT_SECRET,
+                "token": token,
+            },
+            timeout=EXTERNAL_TIMEOUT,
+        )
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.warning("WakaTime token revocation failed: %s", e)
+
+
+def unlink_wakatime_account(user):
+    if user.wakatime_token:
+        revoke_wakatime_token(user.wakatime_token)
+
+    user.wakatime_token = None
+    user.save(update_fields=["wakatime_token"])
+    return user
+
 def sync_github_repos(github_token, user):
     repos = fetch_github_repos(github_token)
 
