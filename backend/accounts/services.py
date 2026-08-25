@@ -150,7 +150,28 @@ def link_github_account(user, code):
     except IntegrityError:
         raise GithubAlreadyLinkedError("This GitHub account is already linked to another Momentum account.")
 
+def revoke_github_token(access_token):
+    url = f"https://api.github.com/applications/{settings.GITHUB_CLIENT_ID}/grant"
 
+    try:
+        response = requests.delete(
+            url,
+            auth = (settings.GITHUB_CLIENT_ID, settings.GITHUB_CLIENT_SECRET),
+            json = {"access_token" : access_token},
+            timeout=EXTERNAL_TIMEOUT
+        )
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.warning("Failed to revoke GitHub authorization: %s", e)    
+    
+def unlink_github_account(user):
+    github_token = user.github_token
+    if github_token:
+        revoke_github_token()
+        user.github_id = None
+        user.github_token = None
+        user.save(updated_fields=["github_id", "github_token"])
+    
 def create_oauth_state(user_id, provider):
     state = secrets.token_urlsafe(32)
     redis_client.setex(f"oauth_state:{provider}:{state}", 600, str(user_id))
@@ -198,10 +219,8 @@ def send_otp(email):
 
     otp = store_otp(email)
     send_otp_email(email, otp)
-   
-    
-        
 
+   
 def verify_otp(email,otp):
     otp_key = f"otp_attempt:{email}"
     key = f"email_otp:{email}"
@@ -215,15 +234,16 @@ def verify_otp(email,otp):
         return False
     else:
         if otp == stored_otp:
-            redis_client.delete(key)
-            redis_client.delete(otp_key)
+            redis_client.delete(key, otp_key)
             return True
         else:
-            count = redis_client.incr(otp_key)
-            if count == 1:
-                redis_client.expire(otp_key, 600)
-            elif count >= 5:
-                redis_client.delete(key)   
+            pipeline = redis_client.pipeline()
+            pipeline.incr(otp_key)
+            pipeline.expire(otp_key, settings.OTP_TTL_SECONDS, nx=True)
+            count = pipeline.execute()[0]
+
+            if count >= settings.OTP_VERIFY_LIMIT:
+                redis_client.delete(key)
             return False
 
 def createusername(email, username):

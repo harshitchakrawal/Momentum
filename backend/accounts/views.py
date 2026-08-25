@@ -23,7 +23,8 @@ from .services import (
     TooManyAttemptsError,
     create_oauth_state,
     consume_oauth_state,
-    link_github_account
+    link_github_account,
+    unlink_github_account,
 )
 redis_client = redis.from_url(settings.REDIS_URL)
 
@@ -209,3 +210,9 @@ class GithubConnectCallbackView(APIView):
             return redirect(f"{FRONTEND_DASHBOARD}?error=github_failed")
 
         return redirect(FRONTEND_DASHBOARD)
+
+class GithubDisconnectView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        unlink_github_account(request.user)

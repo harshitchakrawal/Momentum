@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, LoginView, MeView, LogoutView, GithubLoginView, GithubCallbackView, GithubConnectView, GithubConnectCallbackView, RefreshView, SendOTPView, VerifyOTPView, CreateUsernameView
+from .views import RegisterView, LoginView, MeView, LogoutView, GithubLoginView, GithubCallbackView,GithubConnectView, GithubConnectCallbackView, RefreshView, SendOTPView, VerifyOTPView, CreateUsernameView, GithubDisconnectView
 
 
 urlpatterns = [
@@ -14,5 +14,6 @@ urlpatterns = [
     path('refresh/', RefreshView.as_view(), name='refresh'),
     path('send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
-    path('create-username/', CreateUsernameView.as_view(), name='create-username')
+    path('create-username/', CreateUsernameView.as_view(), name='create-username'),
+    path('github/disconnect/', GithubDisconnectView.as_view(), name='disconnect-github')
 ]
