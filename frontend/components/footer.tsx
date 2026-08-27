@@ -47,11 +47,11 @@ const columns: { heading: string; links: { label: string; href: string }[] }[] =
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0a0a0a] px-6 md:px-20 pt-20 pb-0 overflow-hidden">
+    <footer className="bg-page px-6 md:px-20 pt-20 pb-0 overflow-hidden">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-10 mb-20">
         {columns.map((col) => (
           <div key={col.heading}>
-            <p className="text-[10px] font-mono text-[#444] uppercase tracking-[0.18em] mb-5">
+            <p className="text-[10px] font-mono text-ink-4 uppercase tracking-[0.18em] mb-5">
               {col.heading}
             </p>
             <ul className="space-y-3.5">
@@ -59,7 +59,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-[#666] hover:text-[#ccc] transition-colors"
+                    className="text-sm text-ink-3 hover:text-ink-2 transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -73,7 +73,7 @@ export default function Footer() {
       {/* Bottom — watermark + status */}
       <div className="relative flex items-end justify-between">
         <p
-          className="text-[clamp(5rem,18vw,14rem)] font-bold leading-none tracking-tight text-[#1a1a1a] select-none pointer-events-none"
+          className="text-[clamp(5rem,18vw,14rem)] font-bold leading-none tracking-tight text-line select-none pointer-events-none"
           style={{ fontFamily: 'var(--font-ranade)' }}
           aria-hidden
         >
@@ -82,7 +82,7 @@ export default function Footer() {
 
         <div className="absolute bottom-6 right-0 flex items-center gap-2 pb-6">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span className="text-[11px] font-mono text-[#444]">All systems operational</span>
+          <span className="text-[11px] font-mono text-ink-4">All systems operational</span>
         </div>
       </div>
     </footer>

@@ -354,6 +354,7 @@ const CONNECT_ERRORS: Record<string, string> = {
   github_already_linked:
     'That GitHub account is already linked to another Momentum account. Disconnect it there first.',
   github_failed: 'Could not reach GitHub. Please try again in a moment.',
+  wakatime_failed: 'Could not reach WakaTime. Please try again in a moment.',
 }
 
 function ConnectAlert() {

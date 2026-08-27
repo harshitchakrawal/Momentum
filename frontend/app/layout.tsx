@@ -44,9 +44,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${ranade.variable} ${playfair.variable} ${paquito.variable} h-full antialiased`}
+      className={`${ranade.variable} ${playfair.variable} ${paquito.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        {/* Runs before first paint so a dark-theme visitor never sees a white
+            flash. Must stay inline and synchronous — a deferred script would
+            land after the browser has already painted. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         {/* The GitHub endpoints re-sync from GitHub on every request, so each
             extra fetch costs a burst of upstream calls. Relax both once syncing

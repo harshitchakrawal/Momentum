@@ -2,109 +2,17 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-
-/* ─── Brand marks ──────────────────────────────────────────────────────────
-   GitHub / WakaTime / Notion / Vercel — official Simple Icons paths. These
-   marks are single-colour by design, so they tint through `currentColor`.
-   Jira / Calendar / Meet / Tasks / Zoom — official full-colour vectors, each
-   kept on its own viewBox so the geometry stays exact.
-   Nothing here is redrawn by hand.
-   ────────────────────────────────────────────────────────────────────────── */
-
-const MONO_PATHS = {
-  github:
-    'M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12',
-  wakatime:
-    'M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 2.824a9.176 9.176 0 1 1 0 18.352 9.176 9.176 0 0 1 0-18.352zm5.097 5.058c-.327 0-.61.19-.764.45-1.025 1.463-2.21 3.162-3.288 4.706l-.387-.636a.897.897 0 0 0-.759-.439.901.901 0 0 0-.788.492l-.357.581-1.992-2.943a.897.897 0 0 0-.761-.446c-.514 0-.903.452-.903.96a1 1 0 0 0 .207.61l2.719 3.96c.152.272.44.47.776.47a.91.91 0 0 0 .787-.483c.046-.071.23-.368.314-.504l.324.52c-.035-.047.076.113.087.13.024.031.054.059.078.085.019.019.04.036.058.052.036.033.08.056.115.08.025.016.052.028.076.04.029.015.06.024.088.035.058.025.122.027.18.04.031.004.064.003.092.005.29 0 .546-.149.707-.36 1.4-2 2.842-4.055 4.099-5.849A.995.995 0 0 0 18 8.842c0-.508-.389-.96-.903-.96',
-  notion:
-    'M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.139c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z',
-  vercel: 'M24 22.525H0l12-21.05 12 21.05z',
-} as const
-
-// Zoom's official wordmark (Wikimedia Commons). Native box is 1000 × 224.72.
-const ZOOM_WORDMARK =
-  'm 814.1856,67.388717 c 3.82247,6.59494 5.07303,14.0983 5.48595,22.53368 l 0.5427,11.243253 v 78.62013 l 0.55449,11.25504 c 1.10899,18.38088 14.66459,31.97188 33.18704,33.12806 l 11.19606,0.55449 V 101.16565 l 0.55449,-11.243253 c 0.46011,-8.341 1.69888,-15.98593 5.58033,-22.62806 a 44.902197,44.902197 0 0 1 77.74711,0.14157 c 3.82246,6.59494 5.01403,14.23987 5.47415,22.48649 l 0.55449,11.207863 v 78.65552 l 0.55449,11.25504 c 1.15618,18.47526 14.60561,32.06626 33.18705,33.12806 L 1000,224.72337 V 89.922397 A 89.898775,89.898775 0 0 0 910.13662,0.02362708 89.662821,89.662821 0 0 0 842.71254,30.473587 89.780798,89.780798 0 0 0 775.28845,0.01182708 c -18.66402,0 -35.9831,5.66292002 -50.32915,15.44323992 C 716.20538,5.6865371 696.62113,0.01182708 685.37788,0.01182708 V 224.72337 l 11.24325,-0.55449 c 18.80559,-1.23877 32.39659,-14.46403 33.12805,-33.12806 l 0.60168,-11.25504 v -78.62013 l 0.5545,-11.243253 c 0.47191,-8.48257 1.65168,-15.93874 5.48595,-22.58087 a 45.020174,45.020174 0 0 1 38.89714,-22.39211 44.949388,44.949388 0 0 1 38.89715,22.4393 z M 44.93759,224.18067 l 11.243246,0.5427 H 224.71155 l -0.5545,-11.20785 c -1.52191,-18.47526 -14.6056,-31.97188 -33.13985,-33.17525 l -11.24324,-0.55449 H 78.667327 L 213.4683,44.937617 212.91381,33.741567 C 212.04077,15.077537 198.40259,1.5927271 179.77396,0.56631708 l -11.24325,-0.5073 L 0,0.01182708 0.55449376,11.255077 C 2.0292112,29.553367 15.301668,43.333127 33.682546,44.394927 l 11.255044,0.55449 H 146.04422 L 11.243246,179.79758 11.79774,191.04082 c 1.108987,18.52245 14.475826,31.93648 33.13985,33.12806 z M 641.26613,32.903927 a 112.34987,112.34987 0 0 1 0,158.903753 112.43246,112.43246 0 0 1 -158.93914,0 c -43.8758,-43.8758 -43.8758,-115.027963 0,-158.903753 A 112.29089,112.29089 0 0 1 561.72577,2.7082708e-5 112.37347,112.37347 0 0 1 641.26613,32.915727 Z m -31.7949,31.8185 a 67.447677,67.447677 0 0 1 0,95.349333 67.447677,67.447677 0 0 1 -95.34934,0 67.447677,67.447677 0 0 1 0,-95.349333 67.447677,67.447677 0 0 1 95.34934,0 z M 325.91256,2.7082708e-5 A 112.29089,112.29089 0 0 1 405.31134,32.915727 c 43.88759,43.86399 43.88759,115.027953 0,158.891953 a 112.43246,112.43246 0 0 1 -158.93914,0 c -43.8758,-43.8758 -43.8758,-115.027963 0,-158.903753 A 112.29089,112.29089 0 0 1 325.77098,2.7082708e-5 Z M 373.51643,64.698837 a 67.447677,67.447677 0 0 1 0,95.361123 67.447677,67.447677 0 0 1 -95.34933,0 67.447677,67.447677 0 0 1 0,-95.349333 67.447677,67.447677 0 0 1 95.34933,0 z'
-
-const svgProps = { 'aria-hidden': true, className: 'h-full w-full' } as const
-
-function monoIcon(d: string) {
-  const Component = () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...svgProps}>
-      <path d={d} />
-    </svg>
-  )
-  return Component
-}
-
-const GithubIcon = monoIcon(MONO_PATHS.github)
-// Official Atlassian Jira mark, gradients intact (Wikimedia Commons).
-// viewBox is cropped to the icon group; the wordmark is left out.
-const JiraIcon = () => (
-  <svg viewBox="0 3 25.74 25" fill="none" {...svgProps}>
-    <defs>
-      <linearGradient id="jiraA" x1="19.3455" y1="9.01882" x2="14.2302" y2="14.45" gradientUnits="userSpaceOnUse">
-        <stop offset="0.176" stopColor="#0052CC" />
-        <stop offset="1" stopColor="#2684FF" />
-      </linearGradient>
-      <linearGradient id="jiraB" x1="13.5601" y1="15.0525" x2="7.63562" y2="20.9874" gradientUnits="userSpaceOnUse">
-        <stop offset="0.176" stopColor="#0052CC" />
-        <stop offset="1" stopColor="#2684FF" />
-      </linearGradient>
-    </defs>
-    <path fill="#2684FF" d="M24.664 3H12.2603C12.2603 5.99443 14.7697 8.43176 17.8527 8.43176H20.147V10.5557C20.147 13.5501 22.6565 15.9875 25.7395 15.9875V4.04457C25.7395 3.45265 25.2735 3 24.664 3Z" />
-    <path fill="url(#jiraA)" d="M18.5339 8.98877H6.13013C6.13013 11.9832 8.63956 14.4205 11.7226 14.4205H14.0169V16.5793C14.0169 19.5737 16.5264 22.0111 19.6094 22.0111V10.0333C19.6094 9.47623 19.1433 8.98877 18.5339 8.98877Z" />
-    <path fill="url(#jiraB)" d="M12.4038 15.0125H0C0 18.0069 2.50943 20.4442 5.59245 20.4442H7.88679V22.5682C7.88679 25.5626 10.3962 27.9999 13.4792 27.9999V16.057C13.4792 15.4651 12.9774 15.0125 12.4038 15.0125Z" />
-  </svg>
-)
-const WakaTimeIcon = monoIcon(MONO_PATHS.wakatime)
-const NotionIcon = monoIcon(MONO_PATHS.notion)
-const VercelIcon = monoIcon(MONO_PATHS.vercel)
-// Zoom app tile — brand-blue squircle carrying Zoom's own wordmark.
-// The wordmark is scaled to 60% of the tile and centred; letterforms untouched.
-const ZoomIcon = () => (
-  <svg viewBox="0 0 1000 1000" {...svgProps}>
-    <rect width="1000" height="1000" rx="230" fill="#2D8CFF" />
-    <g transform="translate(200 432.6) scale(0.6)">
-      <path fill="#FFFFFF" fillRule="evenodd" d={ZOOM_WORDMARK} />
-    </g>
-  </svg>
-)
-// Official Google Tasks mark, full colour (Wikimedia Commons, 2021).
-const TasksIcon = () => (
-  <svg viewBox="0 0 527.1 500" {...svgProps}>
-    <polygon fill="#0066DA" points="410.4,58.3 368.8,81.2 348.2,120.6 368.8,168.8 407.8,211 450,187.5 475.9,142.8 450,87.5" />
-    <path fill="#2684FC" d="M249.3,219.4l98.9-98.9c29.1,22.1,50.5,53.8,59.6,90.4L272.1,346.7c-12.2,12.2-32,12.2-44.2,0l-91.5-91.5c-9.8-9.8-9.8-25.6,0-35.3l39-39c9.8-9.8,25.6-9.8,35.3,0L249.3,219.4z M519.8,63.6l-39.7-39.7c-9.7-9.7-25.6-9.7-35.3,0l-34.4,34.4c27.5,23,49.9,51.8,65.5,84.5l43.9-43.9C529.6,89.2,529.6,73.3,519.8,63.6z M412.5,250c0,89.8-72.8,162.5-162.5,162.5S87.5,339.8,87.5,250S160.2,87.5,250,87.5c36.9,0,70.9,12.3,98.2,33.1l62.2-62.2C367,21.9,311.1,0,250,0C111.9,0,0,111.9,0,250s111.9,250,250,250s250-111.9,250-250c0-38.3-8.7-74.7-24.1-107.2L407.8,211C410.8,223.5,412.5,236.6,412.5,250z" />
-  </svg>
-)
-
-// Official Google Calendar mark (Wikimedia Commons, 2020 rebrand).
-const CalendarIcon = () => (
-  <svg viewBox="0 0 200 200" {...svgProps}>
-    <g transform="translate(3.75 3.75)">
-      <path fill="#FFFFFF" d="M148.882,43.618l-47.368-5.263l-57.895,5.263L38.355,96.25l5.263,52.632l52.632,6.579l52.632-6.579l5.263-53.947L148.882,43.618z" />
-      <path fill="#1A73E8" d="M65.211,125.276c-3.934-2.658-6.658-6.539-8.145-11.671l9.132-3.763c0.829,3.158,2.276,5.605,4.342,7.342c2.053,1.737,4.553,2.592,7.474,2.592c2.987,0,5.553-0.908,7.697-2.724s3.224-4.132,3.224-6.934c0-2.868-1.132-5.211-3.395-7.026s-5.105-2.724-8.5-2.724h-5.276v-9.039H76.5c2.921,0,5.382-0.789,7.382-2.368c2-1.579,3-3.737,3-6.487c0-2.447-0.895-4.395-2.684-5.855s-4.053-2.197-6.803-2.197c-2.684,0-4.816,0.711-6.395,2.145s-2.724,3.197-3.447,5.276l-9.039-3.763c1.197-3.395,3.395-6.395,6.618-8.987c3.224-2.592,7.342-3.895,12.342-3.895c3.697,0,7.026,0.711,9.974,2.145c2.947,1.434,5.263,3.421,6.934,5.947c1.671,2.539,2.5,5.382,2.5,8.539c0,3.224-0.776,5.947-2.329,8.184c-1.553,2.237-3.461,3.947-5.724,5.145v0.539c2.987,1.25,5.421,3.158,7.342,5.724c1.908,2.566,2.868,5.632,2.868,9.211s-0.908,6.776-2.724,9.579c-1.816,2.803-4.329,5.013-7.513,6.618c-3.197,1.605-6.789,2.421-10.776,2.421C73.408,129.263,69.145,127.934,65.211,125.276z" />
-      <path fill="#1A73E8" d="M121.25,79.961l-9.974,7.25l-5.013-7.605l17.987-12.974h6.895v61.197h-9.895L121.25,79.961z" />
-      <path fill="#EA4335" d="M148.882,196.25l47.368-47.368l-23.684-10.526l-23.684,10.526l-10.526,23.684L148.882,196.25z" />
-      <path fill="#34A853" d="M33.092,172.566l10.526,23.684h105.263v-47.368H43.618L33.092,172.566z" />
-      <path fill="#4285F4" d="M12.039-3.75C3.316-3.75-3.75,3.316-3.75,12.039v136.842l23.684,10.526l23.684-10.526V43.618h105.263l10.526-23.684L148.882-3.75H12.039z" />
-      <path fill="#188038" d="M-3.75,148.882v31.579c0,8.724,7.066,15.789,15.789,15.789h31.579v-47.368H-3.75z" />
-      <path fill="#FBBC04" d="M148.882,43.618v105.263h47.368V43.618l-23.684-10.526L148.882,43.618z" />
-      <path fill="#1967D2" d="M196.25,43.618V12.039c0-8.724-7.066-15.789-15.789-15.789h-31.579v47.368H196.25z" />
-    </g>
-  </svg>
-)
-
-// Official Google Meet mark (Wikimedia Commons, 2020 rebrand).
-const MeetIcon = () => (
-  <svg viewBox="0 0 87.5 72" fill="none" {...svgProps}>
-    <path fill="#00832d" d="M49.5 36l8.53 9.75 11.47 7.33 2-17.02-2-16.64-11.69 6.44z" />
-    <path fill="#0066da" d="M0 51.5V66c0 3.315 2.685 6 6 6h14.5l3-10.96-3-9.54-9.95-3z" />
-    <path fill="#e94235" d="M20.5 0L0 20.5l10.55 3 9.95-3 2.95-9.41z" />
-    <path fill="#2684fc" d="M20.5 20.5H0v31h20.5z" />
-    <path fill="#00ac47" d="M82.6 8.68L69.5 19.42v33.66l13.16 10.79c1.97 1.54 4.85.135 4.85-2.37V11c0-2.535-2.945-3.925-4.91-2.32zM49.5 36v15.5h-29V72h43c3.315 0 6-2.685 6-6V53.08z" />
-    <path fill="#ffba00" d="M63.5 0h-43v20.5h29V36l20-16.57V6c0-3.315-2.685-6-6-6z" />
-  </svg>
-)
+import {
+  GithubIcon,
+  WakaTimeIcon,
+  NotionIcon,
+  VercelIcon,
+  JiraIcon,
+  ZoomIcon,
+  TasksIcon,
+  CalendarIcon,
+  MeetIcon,
+} from '@/components/brand-icons'
 
 /* ─── Layout data ──────────────────────────────────────────────────────────
    Left rail sits at 8%–17%, right rail at 73%–81% — tucked close to the copy
@@ -146,15 +54,15 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="relative min-h-screen overflow-hidden border-t border-[#1a1a1a] px-6 py-24 md:px-30"
+      className="relative min-h-screen overflow-hidden border-t border-line px-6 py-24 md:px-30"
     >
       {/* Faint grid, echoing the kinetic grid in the CTA */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            'linear-gradient(to right, #1a1a1a 1px, transparent 1px), linear-gradient(to bottom, #1a1a1a 1px, transparent 1px)',
+            'linear-gradient(to right, var(--line-strong) 1px, transparent 1px), linear-gradient(to bottom, var(--line-strong) 1px, transparent 1px)',
           backgroundSize: '88px 88px',
           maskImage: 'radial-gradient(ellipse 75% 60% at 50% 50%, #000 40%, transparent 100%)',
           WebkitMaskImage: 'radial-gradient(ellipse 75% 60% at 50% 50%, #000 40%, transparent 100%)',
@@ -207,11 +115,11 @@ export default function Features() {
             className="flex flex-col items-center gap-2.5"
           >
             <div
-              className={`${CARD_SIZE} flex items-center justify-center rounded-2xl border border-[#242424] bg-[#101010] p-4 text-white shadow-[0_18px_50px_rgba(0,0,0,0.65)]`}
+              className={`${CARD_SIZE} flex items-center justify-center rounded-2xl border border-line-strong bg-raised p-4 text-ink shadow-[0_18px_50px_rgba(0,0,0,0.65)]`}
             >
               <tool.Icon />
             </div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#666]">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-3">
               {tool.name}
             </span>
           </motion.div>
@@ -225,13 +133,13 @@ export default function Features() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#777]"
+          className="font-mono text-[11px] uppercase tracking-[0.22em] text-ink-3"
         >
           One timeline for your
         </motion.span>
 
         <h2
-          className="mt-5 flex flex-col items-center gap-1 text-[clamp(2.6rem,7vw,5.5rem)] leading-[0.98] tracking-[-0.01em] text-white"
+          className="mt-5 flex flex-col items-center gap-1 text-[clamp(2.6rem,7vw,5.5rem)] leading-[0.98] tracking-[-0.01em] text-ink"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {['Developers', 'Focus'].map((word, i) => (
@@ -251,7 +159,7 @@ export default function Features() {
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, amount: 0.5 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.34 }}
-            className="mt-1 rounded-xl bg-white px-5 pb-2 pt-1 text-[#0a0a0a]"
+            className="mt-1 rounded-xl bg-invert px-5 pb-2 pt-1 text-invert-ink"
           >
             Momentum
           </motion.span>
@@ -262,7 +170,7 @@ export default function Features() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.7, ease: 'easeOut', delay: 0.46 }}
-          className="mt-8 max-w-md text-base leading-relaxed text-[#8a8a8a]"
+          className="mt-8 max-w-md text-base leading-relaxed text-ink-3"
         >
           Momentum pulls GitHub, Jira, Meet, Calendar and WakaTime into one view —
           so you can see where your week actually went.
@@ -277,7 +185,7 @@ export default function Features() {
         >
           <Link
             href="/signup"
-            className="font-semibold inline-flex items-center gap-2.5 rounded-full bg-white px-6 py-3.5 font-mono text-sm uppercase tracking-[0.14em] text-[#0a0a0a] transition-colors hover:bg-[#e5e5e5]"
+            className="font-semibold inline-flex items-center gap-2.5 rounded-full bg-invert px-6 py-3.5 font-mono text-sm uppercase tracking-[0.14em] text-invert-ink transition-colors hover:bg-invert/90"
           >
             Connect your tools
             <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">
@@ -297,7 +205,7 @@ export default function Features() {
           {TOOLS.map((tool) => (
             <div
               key={tool.name}
-              className="flex h-14 w-14 items-center justify-center rounded-xl border border-[#242424] bg-[#101010] p-3 text-white"
+              className="flex h-14 w-14 items-center justify-center rounded-xl border border-line-strong bg-raised p-3 text-ink"
             >
               <tool.Icon />
             </div>

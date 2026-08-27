@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-/* The app is dark-only, so drive `dark:` off the `.dark` class on <html>
-   instead of the OS `prefers-color-scheme` default. */
+/* Theme is a deliberate choice, not an OS reading, so `dark:` is driven off
+   the `.dark` class on <html> rather than `prefers-color-scheme`. The class is
+   set before paint by the inline script in app/layout.tsx. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
@@ -28,7 +29,71 @@
   --font-display: var(--font-paquito), Georgia, serif;
 }
 
+/* ─── Theme tokens ─────────────────────────────────────────────────────────
+   Light is the base; `.dark` overrides. Every marketing-page colour reads one
+   of these, so a theme is a value swap here rather than a `dark:` variant on
+   several hundred class names.
+
+   `invert-*` is the deliberately opposite surface — the floating nav pill and
+   the primary button. It stays high-contrast against the page in both themes,
+   which is what makes that design read the same way either way.
+   ────────────────────────────────────────────────────────────────────────── */
+
 :root {
+  /* Pure white ground, so the whole scale is neutral grey — any warmth here
+     would read as a stain against it. */
+  --page: #ffffff;
+  /* The page is already the lightest value, so panels can only separate by
+     going *down* — the dark theme lifts, this one recesses. --raised sits
+     between the two so the ordering (page → raised → surface) still holds. */
+  --surface: #f7f7f7;
+  --raised: #fbfbfb;
+  --line: #e5e5e5;
+  --line-strong: #d4d4d4;
+  --ink: #0a0a0a;
+  --ink-2: #3d3d3d;
+  /* 6.7:1 on --page — the floor for body-sized muted text. */
+  --ink-3: #5c5c5c;
+  /* 2.5:1 — decorative only (watermark, hairline labels). Never real text. */
+  --ink-4: #a3a3a3;
+  --invert: #0a0a0a;
+  --invert-ink: #ffffff;
+  --invert-ink-2: #b0b0b0;
+
+  /* shadcn component tokens (button, empty, the 404 page). */
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #f7f7f7;
+  --card-foreground: #0a0a0a;
+  --primary: #0a0a0a;
+  --primary-foreground: #ffffff;
+  --border: #e5e5e5;
+  --muted: #f7f7f7;
+  --muted-foreground: #5c5c5c;
+  --ring: #0a0a0a;
+  --input: #e5e5e5;
+  --accent: #f0f0f0;
+  --accent-foreground: #0a0a0a;
+  --secondary: #f0f0f0;
+  --secondary-foreground: #0a0a0a;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+}
+
+.dark {
+  --page: #0a0a0a;
+  --surface: #0d0d0d;
+  --raised: #101010;
+  --line: #1a1a1a;
+  --line-strong: #2a2a2a;
+  --ink: #ffffff;
+  --ink-2: #b8b8b8;
+  --ink-3: #8a8a8a;
+  --ink-4: #555555;
+  --invert: #ffffff;
+  --invert-ink: #0a0a0a;
+  --invert-ink-2: #3d3d3d;
+
   --background: #0a0a0a;
   --foreground: #e5e5e5;
   --card: #111111;
@@ -39,8 +104,6 @@
   --muted: #111111;
   --muted-foreground: #888888;
   --ring: #ffffff;
-  /* Needed by the shadcn Button variants (outline / secondary / ghost /
-     destructive). Without these the outline button has no border or hover. */
   --input: #222222;
   --accent: #1a1a1a;
   --accent-foreground: #e5e5e5;
@@ -51,6 +114,20 @@
 }
 
 @theme inline {
+  /* Marketing-page scale. */
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-invert: var(--invert);
+  --color-invert-ink: var(--invert-ink);
+  --color-invert-ink-2: var(--invert-ink-2);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -71,8 +148,8 @@
 }
 
 body {
-  background: #0a0a0a;
-  color: #e5e5e5;
+  background: var(--page);
+  color: var(--ink-2);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

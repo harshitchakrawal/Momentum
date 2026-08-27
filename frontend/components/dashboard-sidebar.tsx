@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSWRConfig } from 'swr'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -41,11 +42,13 @@ const PLUGINS = [
     label: 'GitHub',
     connection: 'github_connected',
     connectHref: `${API_BASE_URL}/api/auth/github/connect/`,
+    disconnectPath: '/auth/github/disconnect/',
   },
   {
     label: 'WakaTime',
     connection: 'wakatime_connected',
     connectHref: `${API_BASE_URL}/api/wakatime/connect/`,
+    disconnectPath: '/wakatime/disconnect/',
   },
   { label: 'Google Calendar' },
   { label: 'Google Meet' },
@@ -76,11 +79,15 @@ function PluginRow({
   label,
   connected,
   connectHref,
+  disconnectPath,
 }: {
   label: string
   connected?: boolean
   connectHref?: string
+  disconnectPath?: string
 }) {
+  const { mutate } = useSWRConfig()
+  const [disconnecting, setDisconnecting] = useState(false)
   const state = !connectHref ? 'soon' : connected ? 'connected' : 'disconnected'
 
   const body = (
@@ -93,6 +100,21 @@ function PluginRow({
   const className =
     'flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition-colors'
 
+  async function handleDisconnect() {
+    const confirmed = window.confirm(
+      `Disconnect ${label}? Momentum will stop syncing from it.`,
+    )
+    if (!confirmed) return
+
+    setDisconnecting(true)
+    try {
+      await api.post(disconnectPath!)
+      await mutate('/auth/me/')
+    } finally {
+      setDisconnecting(false)
+    }
+  }
+
   // Only an unconnected plugin has somewhere to go.
   if (state === 'disconnected') {
     return (
@@ -101,6 +123,20 @@ function PluginRow({
         onClick={() => startOAuthConnect(connectHref!)}
         title={`Connect ${label}`}
         className={`${className} w-full text-left hover:bg-white/4`}
+      >
+        {body}
+      </button>
+    )
+  }
+
+  if (state === 'connected' && disconnectPath) {
+    return (
+      <button
+        type="button"
+        onClick={handleDisconnect}
+        disabled={disconnecting}
+        title={`Disconnect ${label}`}
+        className={`${className} w-full text-left hover:bg-white/4 disabled:opacity-50`}
       >
         {body}
       </button>
@@ -196,6 +232,9 @@ export default function DashboardSidebar({ user }: { user: SidebarUser | null })
                 }
                 connectHref={
                   'connectHref' in plugin ? plugin.connectHref : undefined
+                }
+                disconnectPath={
+                  'disconnectPath' in plugin ? plugin.disconnectPath : undefined
                 }
               />
             ))}

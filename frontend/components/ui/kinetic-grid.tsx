@@ -158,6 +158,10 @@ export default function KineticGrid({
       const mouse = mouseRef.current;
       const ripples = ripplesRef.current;
 
+      // Monochrome follows the page ink, so the grid stays visible on a light
+      // ground too. Read per frame — the class flips when the theme toggles.
+      const ink = document.documentElement.classList.contains("dark") ? 255 : 10;
+
       const theme = {
         default: {
           lineActive: { r: 74, g: 158, b: 255, a: 0.9 },
@@ -166,10 +170,10 @@ export default function KineticGrid({
           ripple: "100,180,255",
         },
         monochrome: {
-          lineActive: { r: 255, g: 255, b: 255, a: 0.9 },
-          nodeActive: { r: 255, g: 255, b: 255, a: 1.0 },
-          glow: "255,255,255",
-          ripple: "255,255,255",
+          lineActive: { r: ink, g: ink, b: ink, a: 0.9 },
+          nodeActive: { r: ink, g: ink, b: ink, a: 1.0 },
+          glow: `${ink},${ink},${ink}`,
+          ripple: `${ink},${ink},${ink}`,
         },
       }[globalColor ?? "default"];
 
@@ -178,7 +182,7 @@ export default function KineticGrid({
       ctx.clearRect(0, 0, W, H);
 
       // Static background dot texture
-      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      ctx.fillStyle = `rgba(${ink},${ink},${ink},0.05)`;
       for (let x = DOT_SPACING / 2; x < W; x += DOT_SPACING) {
         for (let y = DOT_SPACING / 2; y < H; y += DOT_SPACING) {
           ctx.beginPath();
@@ -428,7 +432,7 @@ export default function KineticGrid({
       className={cn(
         "relative w-full min-h-screen overflow-hidden",
         // Default ground; override by passing a bg-* class via className.
-        globalColor === "monochrome" ? "bg-[#0a0a0a]" : "bg-[#161618]",
+        globalColor === "monochrome" ? "bg-page" : "bg-[#161618]",
         className,
       )}
     >
