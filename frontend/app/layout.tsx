@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
 import localFont from "next/font/local";
 import { SWRConfig } from "swr";
+import { LenisProvider } from "@/components/lenis-provider";
 import { TransitionProvider } from "@/components/transition-provider";
 import "./globals.css";
 
@@ -62,7 +63,9 @@ export default function RootLayout({
             extra fetch costs a burst of upstream calls. Relax both once syncing
             moves to a background job. */}
         <SWRConfig value={{ dedupingInterval: 60_000, revalidateOnFocus: false }}>
-          <TransitionProvider>{children}</TransitionProvider>
+          <LenisProvider>
+            <TransitionProvider>{children}</TransitionProvider>
+          </LenisProvider>
         </SWRConfig>
       </body>
     </html>
