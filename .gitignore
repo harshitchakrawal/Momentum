@@ -4,3 +4,10 @@ DJANGO_LEARNING.md
 ARCHITECTURE.md
 layer.md
 .claude
+
+.env
+.env.*
+.venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
