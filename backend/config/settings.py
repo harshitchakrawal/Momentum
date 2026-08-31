@@ -30,7 +30,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 
 # Application definition
@@ -154,7 +154,8 @@ STATIC_URL = 'static/'
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 AUTH_USER_MODEL = "accounts.User"
-REDIS_URL = "redis://localhost:6379/0"
+
+REDIS_URL = env('REDIS_URL', default='redis://redis:6379/0')
 
 GITHUB_CLIENT_ID = env('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = env('GITHUB_CLIENT_SECRET')

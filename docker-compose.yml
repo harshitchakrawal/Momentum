@@ -1,6 +1,38 @@
 services:
+  db:
+    image: postgres:16
+    container_name: momentum-db
+    env_file:
+      - backend/.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   redis:
     image: redis:latest
-    container_name : momentum-redis
-    ports: 
+    container_name: momentum-redis
+    ports:
       - "6379:6379"
+
+  backend:
+    build:
+      context: ./backend
+    container_name: momentum-backend
+    env_file:
+      - backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  postgres-data:

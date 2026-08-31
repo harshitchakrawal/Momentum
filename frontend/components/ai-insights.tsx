@@ -19,12 +19,12 @@ const INSIGHTS = [
   {
     image: '/devanalytics.png',
     alt: 'A developer working with multiple screens',
-    caption: 'See the patterns that help your best work take shape',
+    caption: 'Turn your development activity into actionable insights.',
   },
   {
     image: '/buildcommunity.png',
     alt: 'A team reviewing work together on a laptop',
-    caption: 'Turn activity from your tools into clear weekly insight',
+    caption: 'Build in public, connect with developers, and grow together.',
   },
   {
     image: '/download.jpg',
