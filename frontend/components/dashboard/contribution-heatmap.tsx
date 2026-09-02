@@ -77,11 +77,11 @@ export default function ContributionHeatmap({
   })
 
   return (
-    <section className="rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] p-5">
+    <section className="rounded-lg border border-line bg-surface p-5">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-[15px] font-semibold text-white">Commit activity</h2>
+        <h2 className="text-[15px] font-semibold text-ink">Commit activity</h2>
         {/* Hover read-out, anchored here so it can never clip at the grid edge. */}
-        <p className="text-[12px] text-[#888]">
+        <p className="text-[12px] text-ink-3">
           {hovered
             ? describe(hovered)
             : `${total.toLocaleString()} commit${total === 1 ? '' : 's'} in the last year`}
@@ -92,13 +92,13 @@ export default function ContributionHeatmap({
         <div className="flex" style={{ gap: GAP * 2 }}>
           {/* Weekday gutter — sticky so it stays put while the year scrolls. */}
           <div
-            className="sticky left-0 z-10 grid shrink-0 bg-[#0d0d0d] pr-1"
+            className="sticky left-0 z-10 grid shrink-0 bg-surface pr-1"
             style={{ gap: GAP, gridTemplateRows: `repeat(7, ${cell}px)`, paddingTop: row + 2 }}
           >
             {WEEKDAYS.map((day, i) => (
               <span
                 key={i}
-                className="flex items-center text-[9px] leading-none text-[#555]"
+                className="flex items-center text-[9px] leading-none text-ink-4"
                 style={{ height: cell }}
               >
                 {day}
@@ -113,7 +113,7 @@ export default function ContributionHeatmap({
               {monthLabels.map((label, i) => (
                 <span
                   key={i}
-                  className="text-[9px] leading-none text-[#555]"
+                  className="text-[9px] leading-none text-ink-4"
                   style={{ width: cell }}
                 >
                   {label}
@@ -152,7 +152,7 @@ export default function ContributionHeatmap({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] text-[#555]">
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] text-ink-4">
         <span>Less</span>
         {HEATMAP_SCALE.map((color) => (
           <span

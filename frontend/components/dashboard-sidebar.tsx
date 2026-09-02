@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useSWRConfig } from 'swr'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   DashboardIcon,
   CheckboxIcon,
-  TargetIcon,
+  FileTextIcon,
   LayersIcon,
   BarChartIcon,
   MixIcon,
@@ -17,6 +16,7 @@ import {
   ExitIcon,
 } from '@radix-ui/react-icons'
 import { api, API_BASE_URL, startOAuthConnect } from '@/lib/api'
+import ThemeToggle from '@/components/theme-toggle'
 
 interface SidebarUser {
   username: string
@@ -28,7 +28,7 @@ interface SidebarUser {
 const NAV = [
   { label: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckboxIcon },
-  { label: 'Goals', href: '/dashboard/goals', icon: TargetIcon },
+  { label: 'Notes', href: '/dashboard/notes', icon: FileTextIcon },
   { label: 'Projects', href: '/dashboard/projects', icon: LayersIcon },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChartIcon },
 ]
@@ -42,13 +42,13 @@ const PLUGINS = [
     label: 'GitHub',
     connection: 'github_connected',
     connectHref: `${API_BASE_URL}/api/auth/github/connect/`,
-    disconnectPath: '/auth/github/disconnect/',
+    detailHref: '/dashboard/plugins/github',
   },
   {
     label: 'WakaTime',
     connection: 'wakatime_connected',
     connectHref: `${API_BASE_URL}/api/wakatime/connect/`,
-    disconnectPath: '/wakatime/disconnect/',
+    detailHref: '/dashboard/plugins/wakatime',
   },
   { label: 'Google Calendar' },
   { label: 'Google Meet' },
@@ -63,8 +63,8 @@ const PLUGINS = [
 function StatusDot({ state }: { state: 'connected' | 'disconnected' | 'soon' }) {
   const { color, label } = {
     connected: { color: 'bg-green-400', label: 'Connected' },
-    disconnected: { color: 'bg-[#555]', label: 'Not connected' },
-    soon: { color: 'bg-[#333]', label: 'Coming soon' },
+    disconnected: { color: 'bg-ink-4', label: 'Not connected' },
+    soon: { color: 'bg-line-strong', label: 'Coming soon' },
   }[state]
 
   return (
@@ -79,20 +79,22 @@ function PluginRow({
   label,
   connected,
   connectHref,
-  disconnectPath,
+  detailHref,
 }: {
   label: string
   connected?: boolean
   connectHref?: string
-  disconnectPath?: string
+  detailHref?: string
 }) {
-  const { mutate } = useSWRConfig()
-  const [disconnecting, setDisconnecting] = useState(false)
+  const pathname = usePathname()
   const state = !connectHref ? 'soon' : connected ? 'connected' : 'disconnected'
+  const active = detailHref !== undefined && pathname === detailHref
 
   const body = (
     <>
-      <span className="min-w-0 truncate text-[#888]">{label}</span>
+      <span className={`min-w-0 truncate ${active ? 'text-ink' : 'text-ink-3'}`}>
+        {label}
+      </span>
       <StatusDot state={state} />
     </>
   )
@@ -100,43 +102,27 @@ function PluginRow({
   const className =
     'flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition-colors'
 
-  async function handleDisconnect() {
-    const confirmed = window.confirm(
-      `Disconnect ${label}? Momentum will stop syncing from it.`,
+  // A connected plugin has a report to open; an unconnected one has an OAuth
+  // flow to start. Disconnecting lives on the report page, not one click away.
+  if (state === 'connected' && detailHref) {
+    return (
+      <Link
+        href={detailHref}
+        title={`${label} — view report`}
+        className={`${className} ${active ? 'bg-ink/6' : 'hover:bg-ink/4'}`}
+      >
+        {body}
+      </Link>
     )
-    if (!confirmed) return
-
-    setDisconnecting(true)
-    try {
-      await api.post(disconnectPath!)
-      await mutate('/auth/me/')
-    } finally {
-      setDisconnecting(false)
-    }
   }
 
-  // Only an unconnected plugin has somewhere to go.
   if (state === 'disconnected') {
     return (
       <button
         type="button"
         onClick={() => startOAuthConnect(connectHref!)}
         title={`Connect ${label}`}
-        className={`${className} w-full text-left hover:bg-white/4`}
-      >
-        {body}
-      </button>
-    )
-  }
-
-  if (state === 'connected' && disconnectPath) {
-    return (
-      <button
-        type="button"
-        onClick={handleDisconnect}
-        disabled={disconnecting}
-        title={`Disconnect ${label}`}
-        className={`${className} w-full text-left hover:bg-white/4 disabled:opacity-50`}
+        className={`${className} w-full text-left hover:bg-ink/4`}
       >
         {body}
       </button>
@@ -144,7 +130,7 @@ function PluginRow({
   }
 
   return (
-    <div title={state === 'soon' ? `${label} — coming soon` : `${label} — connected`} className={className}>
+    <div title={`${label} — coming soon`} className={className}>
       {body}
     </div>
   )
@@ -166,11 +152,11 @@ export default function DashboardSidebar({ user }: { user: SidebarUser | null })
   }
 
   return (
-    <aside className="hidden md:flex w-75 shrink-0 flex-col border-r border-[#1a1a1a] bg-[#0a0a0a] h-screen sticky top-0">
-      <div className="px-5 h-14 flex items-center border-b border-[#1a1a1a]">
+    <aside className="hidden md:flex w-75 shrink-0 flex-col border-r border-line bg-page h-screen sticky top-0">
+      <div className="px-5 h-14 flex items-center border-b border-line">
         <Link
           href="/"
-          className="flex items-center gap-2.5 font-sans text-md font-semibold tracking-tight text-white"
+          className="flex items-center gap-2.5 font-sans text-md font-semibold tracking-tight text-ink"
         >
           {/* alt is empty on purpose — the wordmark next to it already names the link. */}
           <Image
@@ -193,8 +179,8 @@ export default function DashboardSidebar({ user }: { user: SidebarUser | null })
               href={href}
               className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[15px]  transition-colors ${
                 active
-                  ? 'text-white bg-white/6'
-                  : 'text-[#888] hover:text-white hover:bg-white/4'
+                  ? 'text-ink bg-ink/6'
+                  : 'text-ink-3 hover:text-ink hover:bg-ink/4'
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -208,7 +194,7 @@ export default function DashboardSidebar({ user }: { user: SidebarUser | null })
           type="button"
           onClick={() => setPluginsOpen((open) => !open)}
           aria-expanded={pluginsOpen}
-          className="mt-1 flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[15px] font-medium text-[#888] hover:text-white hover:bg-white/4 transition-colors"
+          className="mt-1 flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[15px] font-medium text-ink-3 hover:text-ink hover:bg-ink/4 transition-colors"
         >
           <MixIcon className="h-4 w-4" />
           Plugins
@@ -220,7 +206,7 @@ export default function DashboardSidebar({ user }: { user: SidebarUser | null })
         </button>
 
         {pluginsOpen && (
-          <div className="mt-0.5 ml-2 flex flex-col gap-0.5 border-l border-[#1a1a1a] pl-2">
+          <div className="mt-0.5 ml-2 flex flex-col gap-0.5 border-l border-line pl-2">
             {PLUGINS.map((plugin) => (
               <PluginRow
                 key={plugin.label}
@@ -233,8 +219,8 @@ export default function DashboardSidebar({ user }: { user: SidebarUser | null })
                 connectHref={
                   'connectHref' in plugin ? plugin.connectHref : undefined
                 }
-                disconnectPath={
-                  'disconnectPath' in plugin ? plugin.disconnectPath : undefined
+                detailHref={
+                  'detailHref' in plugin ? plugin.detailHref : undefined
                 }
               />
             ))}
@@ -242,20 +228,24 @@ export default function DashboardSidebar({ user }: { user: SidebarUser | null })
         )}
       </nav>
 
-      <div className="p-3 border-t border-[#1a1a1a]">
+      <div className="p-3 border-t border-line">
         <div className="flex items-center justify-between px-1">
           <div className="min-w-0">
-            <p className="text-[15px] text-white truncate">{user?.username}</p>
-            <p className="text-[13px] text-[#555] truncate">{user?.email}</p>
+            <p className="text-[15px] text-ink truncate">{user?.username}</p>
+            <p className="text-[13px] text-ink-4 truncate">{user?.email}</p>
           </div>
-          <button
-            onClick={handleLogout}
-            disabled={loggingOut}
-            title="Log out"
-            className="shrink-0 p-1.5 rounded-md text-[#666] hover:text-white hover:bg-white/6 transition-colors disabled:opacity-50"
-          >
-            <ExitIcon className="h-5 w-5" />
-          </button>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <ThemeToggle className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-ink-3 transition-colors hover:bg-ink/6 hover:text-ink" />
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              title="Log out"
+              className="rounded-md p-1.5 text-ink-3 transition-colors hover:bg-ink/6 hover:text-ink disabled:opacity-50"
+            >
+              <ExitIcon className="h-5 w-5" />
+              <span className="sr-only">Log out</span>
+            </button>
+          </div>
         </div>
       </div>
     </aside>

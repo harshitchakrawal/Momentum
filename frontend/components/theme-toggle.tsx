@@ -14,7 +14,10 @@ function apply(theme: Theme) {
   }
 }
 
-export default function ThemeToggle() {
+const NAV_STYLE =
+  'grid h-9 w-9 shrink-0 place-items-center rounded-full text-invert-ink-2 transition-colors hover:bg-invert-ink/10 hover:text-invert-ink'
+
+export default function ThemeToggle({ className = NAV_STYLE }: { className?: string }) {
   // Starts null so the first render matches the server HTML, which cannot know
   // the visitor's stored choice. The real value lands in the effect below.
   const [theme, setTheme] = useState<Theme | null>(null)
@@ -36,7 +39,7 @@ export default function ThemeToggle() {
       onClick={toggle}
       // Label is only meaningful once we know the current theme.
       aria-label={theme ? `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme` : 'Switch theme'}
-      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-invert-ink-2 transition-colors hover:bg-invert-ink/10 hover:text-invert-ink"
+      className={className}
     >
       {/* Both render until the theme is known; the placeholder keeps layout stable. */}
       {theme === 'dark' ? (

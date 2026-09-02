@@ -11,24 +11,24 @@ export default function LanguageBreakdown({ repos }: { repos: RepoLike[] }) {
   const max = rows.length > 0 ? rows[0].count : 0
 
   return (
-    <section className="rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] p-5">
-      <h2 className="text-[15px] font-semibold text-white">Languages</h2>
-      <p className="mt-1 text-[12px] text-[#666]">Repositories per language</p>
+    <section className="rounded-lg border border-line bg-surface p-5">
+      <h2 className="text-[15px] font-semibold text-ink">Languages</h2>
+      <p className="mt-1 text-[12px] text-ink-3">Repositories per language</p>
 
       {rows.length === 0 ? (
-        <p className="mt-5 text-[13px] text-[#666]">
+        <p className="mt-5 text-[13px] text-ink-3">
           No languages detected yet.
         </p>
       ) : (
         <ul className="mt-5 flex flex-col gap-3">
           {rows.map((row) => (
             <li key={row.name} className="flex items-center gap-3">
-              <span className="w-24 shrink-0 truncate text-[13px] text-[#aaa]">
+              <span className="w-24 shrink-0 truncate text-[13px] text-ink-2">
                 {row.name}
               </span>
 
               {/* Track keeps every bar on one baseline so lengths compare. */}
-              <span className="h-2 min-w-0 flex-1 rounded-[2px] bg-[#161616]">
+              <span className="h-2 min-w-0 flex-1 rounded-[2px] bg-line">
                 <span
                   className="block h-full rounded-r-[4px]"
                   style={{
@@ -38,7 +38,7 @@ export default function LanguageBreakdown({ repos }: { repos: RepoLike[] }) {
                 />
               </span>
 
-              <span className="w-8 shrink-0 text-right text-[12px] tabular-nums text-[#888]">
+              <span className="w-8 shrink-0 text-right text-[12px] tabular-nums text-ink-3">
                 {row.count}
               </span>
             </li>

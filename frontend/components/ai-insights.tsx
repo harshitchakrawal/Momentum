@@ -27,7 +27,7 @@ const INSIGHTS = [
     caption: 'Build in public, connect with developers, and grow together.',
   },
   {
-    image: '/download.jpg',
+    image: '/keepbuilding.png',
     alt: 'A blurred figure moving quickly through a bright space',
     caption: 'Spot momentum, slowdowns, and context switches across the week',
   },

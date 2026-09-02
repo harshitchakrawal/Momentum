@@ -1,51 +1,24 @@
 'use client'
 
-import { PlusIcon } from '@radix-ui/react-icons'
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from '@/components/ui/empty'
+import { useDashboardUser } from '../layout'
+import TaskList from '@/components/dashboard/task-list'
+import MarkerUnderline from '@/components/dashboard/marker-underline'
 
 export default function TasksPage() {
+  const user = useDashboardUser()
+
   return (
     <>
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-white text-2xl font-semibold">Tasks</h1>
+      <h1 className="relative inline-block text-2xl font-semibold text-ink">
+        Tasks
+        <MarkerUnderline className="absolute -bottom-2 left-0 h-2.5 w-full text-ink" />
+      </h1>
 
-        <button
-          type="button"
-          disabled
-          title="Task creation is coming soon"
-          className="flex items-center gap-2 bg-[#e5e5e5] text-[#0a0a0a] text-sm font-semibold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <PlusIcon className="h-4 w-4" />
-          New task
-        </button>
-      </div>
-
-      <p className="text-[#666] text-sm mb-10">
+      <p className="mt-1 mb-8 text-sm text-ink-3">
         Everything you&apos;ve planned to ship, in one list.
       </p>
 
-      <div className="border border-[#222] border-dashed rounded-lg">
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle className="text-white">No tasks yet</EmptyTitle>
-            <EmptyDescription>
-              Once the tasks API is wired up, everything you create will show up
-              here.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <p className="text-[#555] text-xs">
-              Coming soon — this page is a placeholder.
-            </p>
-          </EmptyContent>
-        </Empty>
-      </div>
+      {user ? <TaskList storageKey={`momentum:tasks:${user.email}`} /> : null}
     </>
   )
 }

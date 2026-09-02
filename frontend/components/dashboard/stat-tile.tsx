@@ -30,20 +30,18 @@ export default function StatTile({
 }: StatTileProps) {
   const direction = delta ? Math.sign(delta.value) : 0
   const deltaColor =
-    direction > 0 ? DELTA_UP : direction < 0 ? DELTA_DOWN : '#666'
+    direction > 0 ? DELTA_UP : direction < 0 ? DELTA_DOWN : 'var(--ink-3)'
 
   return (
-    <div className="rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] px-4 py-3.5">
-      <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#666]">
-        {label}
-      </p>
+    <div className="rounded-lg border border-line bg-surface px-4 py-3.5">
+      <p className="text-[12px] text-ink-3">{label}</p>
 
       {/* Proportional figures on purpose — tabular-nums makes a large standalone
           number look loose. Tabular is for columns, not headline values. */}
-      <p className="mt-2 flex items-baseline gap-1.5 text-[26px] font-semibold leading-none text-white">
+      <p className="mt-2 flex items-baseline gap-1.5 text-[26px] font-semibold leading-none text-ink">
         {formatValue(value)}
         {unit && (
-          <span className="text-[13px] font-normal text-[#666]">{unit}</span>
+          <span className="text-[13px] font-normal text-ink-3">{unit}</span>
         )}
       </p>
 
@@ -54,11 +52,11 @@ export default function StatTile({
             {direction > 0 ? '↑' : direction < 0 ? '↓' : '→'}
           </span>{' '}
           {direction > 0 ? '+' : ''}
-          {delta.value} <span className="text-[#666]">vs {delta.period}</span>
+          {delta.value} <span className="text-ink-3">vs {delta.period}</span>
         </p>
       )}
 
-      {!delta && hint && <p className="mt-2 text-[12px] text-[#666]">{hint}</p>}
+      {!delta && hint && <p className="mt-2 text-[12px] text-ink-3">{hint}</p>}
     </div>
   )
 }

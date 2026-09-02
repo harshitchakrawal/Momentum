@@ -33,8 +33,8 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="text-[#666]">Loading...</p>
+      <main className="min-h-screen bg-page flex items-center justify-center">
+        <p className="text-ink-3">Loading...</p>
       </main>
     )
   }
@@ -43,11 +43,11 @@ export default function DashboardLayout({
   // This covers whatever it doesn't, so the user never sees a blank screen.
   if (error || !user) {
     return (
-      <main className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center gap-4 px-4">
-        <p className="text-[#666] text-sm">Your session has expired.</p>
+      <main className="min-h-screen bg-page flex flex-col items-center justify-center gap-4 px-4">
+        <p className="text-ink-3 text-sm">Your session has expired.</p>
         <Link
           href="/login"
-          className="bg-[#e5e5e5] hover:bg-white text-[#0a0a0a] text-sm font-semibold py-2 px-4 rounded-md transition-colors"
+          className="bg-invert hover:bg-invert/90 text-invert-ink text-sm font-semibold py-2 px-4 rounded-md transition-colors"
         >
           Log in again
         </Link>
@@ -57,7 +57,7 @@ export default function DashboardLayout({
 
   return (
     <UserContext.Provider value={user}>
-      <div className="min-h-screen bg-[#0a0a0a] flex">
+      <div className="min-h-screen bg-page flex">
         <DashboardSidebar user={user} />
         <main className="flex-1 px-6 md:px-10 py-12 flex flex-col items-center">
           <div className="w-full max-w-6xl">{children}</div>
