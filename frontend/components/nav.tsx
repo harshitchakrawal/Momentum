@@ -79,7 +79,7 @@ export default function Nav() {
           <Link
             href="/dashboard"
             title={`Signed in as ${username}`}
-            className="font-mono flex shrink-0 items-center gap-2 bg-page text-ink text-md font-medium px-4 md:px-5 py-2.5 rounded-full hover:bg-invert/85 transition-colors"
+            className="font-mono flex shrink-0 items-center gap-2 bg-page text-ink text-md font-medium px-4 md:px-5 py-2.5 rounded-full hover:bg-page/85 transition-colors"
           >
             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ink/15 text-[11px] font-semibold uppercase">
               {username.slice(0, 1)}
@@ -89,7 +89,7 @@ export default function Nav() {
         ) : username === false ? (
           <Link
             href="/signup"
-            className="font-mono shrink-0 bg-page text-ink text-md font-medium px-5 md:px-6 py-3 rounded-full hover:bg-invert/85 transition-colors"
+            className="font-mono shrink-0 bg-page text-ink text-md font-medium px-5 md:px-6 py-3 rounded-full hover:bg-page/85 transition-colors"
           >
             Try Momentum
           </Link>

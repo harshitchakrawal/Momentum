@@ -22,13 +22,13 @@ const cards = [
 
 export function ProductHighlight() {
   return (
-    <section className="border-t border-[#1a1a1a] px-6 md:px-30 py-24">
+    <section className="border-t border-line px-6 md:px-30 py-24">
       <motion.h2
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="text-[clamp(2rem,4.5vw,3.25rem)] font-normal leading-[1.08] text-white mb-14"
+        className="text-[clamp(2rem,4.5vw,3.25rem)] font-normal leading-[1.08] text-ink mb-14"
         style={{ fontFamily: "var(--font-display)" }}
       >
         Build your habit
@@ -44,7 +44,7 @@ export function ProductHighlight() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: "easeOut", delay: i * 0.1 }}
-            className="relative rounded-2xl overflow-hidden border border-[#1a1a1a] h-105"
+            className="relative rounded-2xl overflow-hidden border border-line h-105"
           >
             <Image
               src={card.image}

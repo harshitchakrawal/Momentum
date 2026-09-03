@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import MarkerUnderline from './marker-underline'
+import { Popover, MenuItem } from './menu'
 import {
   CalendarIcon,
   Cross2Icon,
@@ -8,7 +10,6 @@ import {
   PlusIcon,
   TextAlignLeftIcon,
   BookmarkIcon,
-  CheckIcon,
 } from '@radix-ui/react-icons'
 
 export type Priority = 'high' | 'mid' | 'low'
@@ -51,32 +52,6 @@ export function formatDue(due: string) {
   })
 }
 
-function useDismiss(onDismiss: () => void) {
-  const ref = useRef<HTMLDivElement>(null)
-  const latest = useRef(onDismiss)
-  latest.current = onDismiss
-
-  useEffect(() => {
-    function onPointerDown(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        latest.current()
-      }
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') latest.current()
-    }
-
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [])
-
-  return ref
-}
-
 function Chip({
   active,
   onClick,
@@ -92,7 +67,7 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[14px] transition-colors ${
+      className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[15px] transition-colors ${
         active
           ? 'border-line-strong bg-ink/6 text-ink'
           : 'border-line text-ink-3 hover:border-line-strong hover:text-ink'
@@ -100,49 +75,6 @@ function Chip({
       style={active && color ? { color } : undefined}
     >
       {children}
-    </button>
-  )
-}
-
-function Popover({
-  onClose,
-  children,
-}: {
-  onClose: () => void
-  children: React.ReactNode
-}) {
-  const ref = useDismiss(onClose)
-
-  return (
-    <div
-      ref={ref}
-      className="absolute left-0 top-full z-20 mt-1.5 min-w-52 rounded-lg border border-line-strong bg-raised p-1 shadow-[0_16px_40px_rgba(0,0,0,0.6)]"
-    >
-      {children}
-    </div>
-  )
-}
-
-function MenuItem({
-  onClick,
-  icon,
-  children,
-  checked,
-}: {
-  onClick: () => void
-  icon: React.ReactNode
-  children: React.ReactNode
-  checked?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[14px] text-ink-2 transition-colors hover:bg-ink/6 hover:text-ink"
-    >
-      <span className="shrink-0 text-ink-3">{icon}</span>
-      <span className="min-w-0 flex-1 truncate">{children}</span>
-      {checked && <CheckIcon className="h-4 w-4 shrink-0 text-ink-3" />}
     </button>
   )
 }
@@ -212,7 +144,7 @@ export default function TaskComposer({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group flex w-full items-center gap-2.5 rounded-lg px-2 py-2.5 text-left text-[15px] text-ink-3 transition-colors hover:text-ink"
+        className="group flex w-full items-center gap-2.5 rounded-lg px-2 py-2.5 text-left text-[16px] text-ink-3 transition-colors hover:text-ink"
       >
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors group-hover:bg-invert/90 group-hover:text-invert-ink">
           <PlusIcon className="h-3.5 w-3.5" />
@@ -228,17 +160,31 @@ export default function TaskComposer({
         event.preventDefault()
         submit()
       }}
-      className="rounded-lg border border-line-strong bg-surface p-3"
+      className="rounded-lg p-3"
     >
       <div className="flex items-start gap-2">
-        <input
-          ref={titleRef}
-          value={draft.title}
-          onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-          placeholder="Fix the token refresh race in api.ts"
-          aria-label="Task name"
-          className="min-w-0 flex-1 bg-transparent px-1 py-1 text-[16px] text-ink outline-none placeholder:text-ink-4"
-        />
+        <div className="relative min-w-0 flex-1">
+          <input
+            ref={titleRef}
+            value={draft.title}
+            onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+            placeholder="Fix the token refresh race in api.ts"
+            aria-label="Task name"
+            className="w-full bg-transparent px-1 pt-1 pb-3 text-[17px] text-ink outline-none placeholder:text-ink-4"
+          />
+
+          {draft.title !== '' && (
+            <div className="pointer-events-none absolute inset-x-1 bottom-0 grid justify-start">
+              <span
+                aria-hidden="true"
+                className="invisible col-start-1 row-start-1 h-2 overflow-hidden whitespace-pre text-[17px]"
+              >
+                {draft.title}
+              </span>
+              <MarkerUnderline className="col-start-1 row-start-1 h-2 w-full text-ink-3" />
+            </div>
+          )}
+        </div>
         <button
           type="button"
           onClick={close}
@@ -259,7 +205,7 @@ export default function TaskComposer({
           placeholder="Description"
           aria-label="Description"
           rows={2}
-          className="mt-1 w-full resize-none bg-transparent px-1 text-[14px] text-ink-2 outline-none placeholder:text-ink-4"
+          className="mt-1 w-full resize-none bg-transparent px-1 text-[15px] text-ink-2 outline-none placeholder:text-ink-4"
         />
       )}
 
@@ -269,7 +215,7 @@ export default function TaskComposer({
             {draft.labels.map((label) => (
               <span
                 key={label}
-                className="flex items-center gap-1 rounded border border-line-strong px-1.5 py-0.5 text-[13px] text-ink-2"
+                className="flex items-center gap-1 rounded border border-line-strong px-1.5 py-0.5 text-[14px] text-ink-2"
               >
                 @{label}
                 <button
@@ -298,7 +244,7 @@ export default function TaskComposer({
               }}
               placeholder="Add a label"
               aria-label="Add a label"
-              className="min-w-28 flex-1 bg-transparent text-[13px] text-ink-2 outline-none placeholder:text-ink-4"
+              className="min-w-28 flex-1 bg-transparent text-[14px] text-ink-2 outline-none placeholder:text-ink-4"
             />
           </div>
         </div>
@@ -355,7 +301,7 @@ export default function TaskComposer({
                     setDraft((d) => ({ ...d, due: e.target.value }))
                   }
                   aria-label="Due date"
-                  className="w-full rounded-md border border-line-strong bg-surface px-2.5 py-2 text-[14px] text-ink outline-none"
+                  className="w-full rounded-md border border-line-strong bg-surface px-2.5 py-2 text-[15px] text-ink outline-none"
                 />
                 {draft.due && (
                   <button
@@ -364,7 +310,7 @@ export default function TaskComposer({
                       setDraft((d) => ({ ...d, due: '' }))
                       setMenu(null)
                     }}
-                    className="mt-1.5 w-full rounded-md px-2.5 py-1.5 text-left text-[14px] text-ink-3 transition-colors hover:bg-ink/6 hover:text-ink"
+                    className="mt-1.5 w-full rounded-md px-2.5 py-1.5 text-left text-[15px] text-ink-3 transition-colors hover:bg-ink/6 hover:text-ink"
                   >
                     Clear date
                   </button>
@@ -416,14 +362,14 @@ export default function TaskComposer({
         <button
           type="button"
           onClick={close}
-          className="rounded-md px-3.5 py-2 text-[14px] font-medium text-ink-3 transition-colors hover:bg-ink/6 hover:text-ink"
+          className="rounded-md px-3.5 py-2 text-[15px] font-medium text-ink-3 transition-colors hover:bg-ink/6 hover:text-ink"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={draft.title.trim() === ''}
-          className="rounded-md bg-invert px-3.5 py-2 text-[14px] font-semibold text-invert-ink transition-colors hover:bg-invert/90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-md bg-invert px-3.5 py-2 text-[15px] font-semibold text-invert-ink transition-colors hover:bg-invert/90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Add task
         </button>
