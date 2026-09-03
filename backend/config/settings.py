@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'accounts',
     'integrations',
     'rest_framework_simplejwt',
+    'tasks'
 ]
 
 MIDDLEWARE = [
@@ -112,7 +113,6 @@ DATABASES = {
         'PORT': env('DB_PORT'),
     }
 }
-
 
 
 # Password validation

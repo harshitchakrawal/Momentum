@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/github/', include('integrations.urls')),
+    path('api/tasks/', include('tasks.urls')),
     path('api/wakatime/connect/', WakatimeConnectView.as_view(), name='wakatime-connect'),
     path('api/wakatime/callback/', WakatimeCallbackView.as_view(), name='wakatime-callback'),
     path('api/wakatime/disconnect/', WakatimeDisconnectView.as_view(), name='wakatime-disconnect'),
