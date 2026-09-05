@@ -20,7 +20,7 @@ import {
 import {
   StatTileSkeleton,
   HeatmapSkeleton,
-  ListSkeleton,
+  RepoGridSkeleton,
 } from '@/components/dashboard/skeleton'
 
 interface Repo {
@@ -255,8 +255,8 @@ export default function Dashboard() {
         <p className="mt-1 text-[12px] text-ink-3">Most recently updated</p>
 
         {loading ? (
-          <div className="mt-5">
-            <ListSkeleton rows={3} />
+          <div className="mt-4">
+            <RepoGridSkeleton count={REPO_PREVIEW} />
           </div>
         ) : recentRepos.length === 0 ? (
           <p className="mt-5 text-[13px] text-ink-3">No repos found.</p>

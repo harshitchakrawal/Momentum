@@ -4,6 +4,7 @@ import useSWR from 'swr'
 
 import { createContext, useContext } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { fetcher } from '@/lib/api'
 import DashboardSidebar from '@/components/dashboard-sidebar'
 
@@ -30,6 +31,7 @@ export default function DashboardLayout({
   // SWR keeps this in a module-level cache, so navigating away and back
   // re-renders instantly instead of dropping to a loading screen.
   const { data: user, error, isLoading } = useSWR<DashboardUser>('/auth/me/', fetcher)
+  const fullBleed = usePathname().startsWith('/dashboard/notes')
 
   if (isLoading) {
     return (
@@ -59,9 +61,13 @@ export default function DashboardLayout({
     <UserContext.Provider value={user}>
       <div className="min-h-screen bg-page flex">
         <DashboardSidebar user={user} />
-        <main className="flex-1 px-6 md:px-10 py-12 flex flex-col items-center">
-          <div className="w-full max-w-6xl">{children}</div>
-        </main>
+        {fullBleed ? (
+          <main className="flex min-w-0 flex-1 flex-col">{children}</main>
+        ) : (
+          <main className="flex-1 px-6 md:px-10 py-12 flex flex-col items-center">
+            <div className="w-full max-w-6xl">{children}</div>
+          </main>
+        )}
       </div>
     </UserContext.Provider>
   )

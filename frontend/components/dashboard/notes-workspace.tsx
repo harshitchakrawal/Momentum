@@ -126,6 +126,7 @@ export default function NotesWorkspace() {
 
   const titleRef = useRef<HTMLInputElement>(null)
   const creatingRef = useRef(false)
+  const scratchStartedAt = useRef('')
 
   const notes = useMemo(() => normalise(data), [data])
 
@@ -207,6 +208,7 @@ export default function NotesWorkspace() {
     setSelectedId(null)
     setDraft(null)
     setScratch(EMPTY_DRAFT)
+    scratchStartedAt.current = ''
     setEditorKey(`scratch-${Date.now()}`)
     setStatus('saved')
     setCreateFailed(false)
@@ -250,6 +252,9 @@ export default function NotesWorkspace() {
   }
 
   function editScratch(next: NoteDraft) {
+    if (scratchStartedAt.current === '' && !isBlank(next)) {
+      scratchStartedAt.current = new Date().toISOString()
+    }
     setScratch(next)
 
     if (createFailed || creatingRef.current || isBlank(next)) return
@@ -305,11 +310,25 @@ export default function NotesWorkspace() {
   const editing = selected && draft ? { note: selected, draft } : null
   const scratching = !editing && scratch !== null ? scratch : null
 
+  const rows = useMemo(() => {
+    if (!scratching || isBlank(scratching)) return visible
+
+    return [
+      {
+        ...SCRATCH,
+        title: scratching.title,
+        body: scratching.body,
+        updated_at: scratchStartedAt.current,
+      },
+      ...visible,
+    ]
+  }, [scratching, visible])
+
   return (
     <MotionConfig reducedMotion="user">
-      <div className="flex h-[calc(100vh-15rem)] min-h-150 overflow-hidden rounded-xl border border-line-strong bg-page">
+      <div className="flex h-screen min-h-0 flex-1 overflow-hidden bg-page">
         <aside
-          className={`w-full shrink-0 flex-col border-line bg-surface md:flex md:w-80 md:border-r ${
+          className={`w-full shrink-0 flex-col border-line bg-surface md:flex md:w-88 md:border-r ${
             pane === 'editor' ? 'hidden' : 'flex'
           }`}
         >
@@ -318,7 +337,7 @@ export default function NotesWorkspace() {
               <h2 className="text-[21px] font-semibold tracking-tight text-ink">
                 {FILTERS.find((option) => option.value === filter)?.label}
               </h2>
-              <span className="text-[14px] text-ink-4">{visible.length}</span>
+              <span className="text-[14px] text-ink-4">{rows.length}</span>
             </div>
 
             <div className="mt-4 flex items-center justify-between">
@@ -426,25 +445,29 @@ export default function NotesWorkspace() {
               </p>
             )}
 
-            {isLoading ? null : error ? (
-              <p className="px-2 py-10 text-center text-[14px] text-danger">
+            {error && (
+              <p className="mb-3 px-2 text-[13px] text-danger">
                 Could not load your notes. Is <code>/api/notes/</code> set up
                 on the backend?
               </p>
-            ) : visible.length === 0 ? (
-              <p className="px-2 py-10 text-center text-[14px] text-ink-3">
-                {notes.length === 0
-                  ? 'No notes yet. Your first one is waiting on the right.'
-                  : query.trim() !== ''
-                    ? 'Nothing matches that search.'
-                    : filter === 'pinned'
-                      ? 'No pinned notes yet.'
-                      : 'No tagged notes yet.'}
-              </p>
+            )}
+
+            {isLoading ? null : rows.length === 0 ? (
+              error ? null : (
+                <p className="px-2 py-10 text-center text-[14px] text-ink-3">
+                  {notes.length === 0
+                    ? 'No notes yet. Your first one is waiting on the right.'
+                    : query.trim() !== ''
+                      ? 'Nothing matches that search.'
+                      : filter === 'pinned'
+                        ? 'No pinned notes yet.'
+                        : 'No tagged notes yet.'}
+                </p>
+              )
             ) : (
               <ul className="flex flex-col gap-1.5">
                 <AnimatePresence initial={false}>
-                  {visible.map((note) => (
+                  {rows.map((note) => (
                     <motion.li
                       key={note.id}
                       layout
@@ -455,10 +478,12 @@ export default function NotesWorkspace() {
                     >
                       <button
                         type="button"
-                        onClick={() => select(note)}
-                        aria-current={note.id === selectedId}
+                        onClick={() =>
+                          note.id === 0 ? setPane('editor') : select(note)
+                        }
+                        aria-current={note.id === 0 || note.id === selectedId}
                         className={`w-full rounded-lg border px-4 py-3.5 text-left transition-colors ${
-                          note.id === selectedId
+                          note.id === 0 || note.id === selectedId
                             ? 'border-line-strong bg-raised'
                             : 'border-transparent hover:bg-ink/6'
                         }`}
