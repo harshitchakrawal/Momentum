@@ -1,71 +1,46 @@
 'use client'
 
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useRef, useState, type RefObject } from 'react'
+import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { FontFamily, FontSize, TextStyle } from '@tiptap/extension-text-style'
+import { Placeholder } from '@tiptap/extensions'
 import {
-  CheckboxIcon,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CodeIcon,
   Cross2Icon,
   DotsHorizontalIcon,
   DrawingPinFilledIcon,
   DrawingPinIcon,
-  FontBoldIcon,
-  FontItalicIcon,
-  HeadingIcon,
-  Link2Icon,
-  ListBulletIcon,
   PlusIcon,
-  QuoteIcon,
 } from '@radix-ui/react-icons'
 import { Trash2 } from 'lucide-react'
+import MarkerUnderline from './marker-underline'
 import { Popover, MenuItem } from './menu'
-import NoteStarters, { type StarterPatch } from './note-starters'
+import {
+  DEFAULT_FONT,
+  DEFAULT_SIZE,
+  FONT_SIZES,
+  NOTE_FONTS,
+  fontMeta,
+} from './note-fonts'
 import type { Note, NoteDraft, SaveStatus } from './notes-workspace'
 
-type Format =
-  | 'bold'
-  | 'italic'
-  | 'code'
-  | 'heading'
-  | 'bullet'
-  | 'todo'
-  | 'quote'
-  | 'link'
-
-const WRAPS: Partial<Record<Format, string>> = {
-  bold: '**',
-  italic: '*',
-  code: '`',
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 }
 
-const PREFIXES: Partial<Record<Format, string>> = {
-  heading: '## ',
-  bullet: '- ',
-  todo: '- [ ] ',
-  quote: '> ',
+function toHtml(body: string) {
+  if (body === '' || /<[a-z][^>]*>/i.test(body)) return body
+  return body
+    .split('\n')
+    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .join('')
 }
-
-const TOOL_GROUPS: {
-  id: Format
-  label: string
-  icon: typeof FontBoldIcon
-}[][] = [
-  [
-    { id: 'bold', label: 'Bold', icon: FontBoldIcon },
-    { id: 'italic', label: 'Italic', icon: FontItalicIcon },
-    { id: 'heading', label: 'Heading', icon: HeadingIcon },
-  ],
-  [
-    { id: 'bullet', label: 'Bullet list', icon: ListBulletIcon },
-    { id: 'todo', label: 'Checklist', icon: CheckboxIcon },
-    { id: 'quote', label: 'Quote', icon: QuoteIcon },
-  ],
-  [
-    { id: 'code', label: 'Code', icon: CodeIcon },
-    { id: 'link', label: 'Link', icon: Link2Icon },
-  ],
-]
 
 export default function NoteEditor({
   note,
@@ -93,113 +68,59 @@ export default function NoteEditor({
   onRemoveTag: (tag: string) => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [picker, setPicker] = useState<'font' | 'size' | null>(null)
   const [tagDraft, setTagDraft] = useState('')
 
-  const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const draftRef = useRef(draft)
+  draftRef.current = draft
 
-  useEffect(() => {
-    const field = bodyRef.current
-    if (!field) return
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
 
-    field.style.height = 'auto'
-    field.style.height = `${field.scrollHeight}px`
-  }, [draft.body])
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      StarterKit,
+      TextStyle,
+      FontFamily,
+      FontSize,
+      Placeholder.configure({ placeholder: 'Start writing…' }),
+    ],
+    content: toHtml(draft.body),
+    editorProps: {
+      attributes: {
+        'aria-label': 'Note body',
+        class: 'min-h-96 leading-[1.8] text-ink-2 outline-none',
+      },
+    },
+    onUpdate: ({ editor }) => {
+      onChangeRef.current({
+        ...draftRef.current,
+        body: editor.isEmpty ? '' : editor.getHTML(),
+      })
+    },
+  })
 
-  function commit(body: string, from: number, to: number) {
-    onChange({ ...draft, body })
-
-    requestAnimationFrame(() => {
-      const field = bodyRef.current
-      if (!field) return
-
-      field.focus()
-      field.setSelectionRange(from, to)
-    })
-  }
-
-  function applyFormat(format: Format) {
-    const field = bodyRef.current
-    if (!field) return
-
-    const value = draft.body
-    const start = field.selectionStart
-    const end = field.selectionEnd
-
-    if (format === 'link') {
-      const text = value.slice(start, end) || 'text'
-      const caret = start + text.length + 3
-
-      commit(
-        `${value.slice(0, start)}[${text}](url)${value.slice(end)}`,
-        caret,
-        caret + 3,
-      )
-      return
-    }
-
-    const wrap = WRAPS[format]
-
-    if (wrap) {
-      const selected = value.slice(start, end)
-      const before =
-        start >= wrap.length ? value.slice(start - wrap.length, start) : ''
-      const after = value.slice(end, end + wrap.length)
-
-      if (before === wrap && after === wrap) {
-        commit(
-          value.slice(0, start - wrap.length) +
-            selected +
-            value.slice(end + wrap.length),
-          start - wrap.length,
-          end - wrap.length,
-        )
-        return
+  const cursor = useEditorState({
+    editor,
+    selector: ({ editor }) => {
+      if (!editor) return { family: '', size: '', text: '' }
+      const attrs = editor.getAttributes('textStyle')
+      return {
+        family: typeof attrs.fontFamily === 'string' ? attrs.fontFamily : '',
+        size: typeof attrs.fontSize === 'string' ? attrs.fontSize : '',
+        text: editor.getText(),
       }
+    },
+  })
 
-      commit(
-        `${value.slice(0, start)}${wrap}${selected}${wrap}${value.slice(end)}`,
-        start + wrap.length,
-        end + wrap.length,
-      )
-      return
-    }
+  const currentFont =
+    NOTE_FONTS.find((font) => font.family === cursor?.family) ??
+    fontMeta(DEFAULT_FONT)
+  const currentSize = Number.parseInt(cursor?.size ?? '', 10) || DEFAULT_SIZE
 
-    const prefix = PREFIXES[format]
-    if (!prefix) return
-
-    const lineStart = value.lastIndexOf('\n', start - 1) + 1
-
-    if (value.slice(lineStart).startsWith(prefix)) {
-      commit(
-        value.slice(0, lineStart) + value.slice(lineStart + prefix.length),
-        Math.max(lineStart, start - prefix.length),
-        Math.max(lineStart, end - prefix.length),
-      )
-      return
-    }
-
-    commit(
-      value.slice(0, lineStart) + prefix + value.slice(lineStart),
-      start + prefix.length,
-      end + prefix.length,
-    )
-  }
-
-  function applyStarter({ title, body }: StarterPatch) {
-    onChange({ title: title ?? draft.title, body })
-
-    requestAnimationFrame(() => {
-      const field = bodyRef.current
-      if (!field) return
-
-      field.focus()
-      field.setSelectionRange(body.length, body.length)
-    })
-  }
-
-  const blank = draft.body.trim() === ''
-
-  const words = blank ? 0 : draft.body.trim().split(/\s+/).length
+  const text = (cursor?.text ?? '').trim()
+  const words = text === '' ? 0 : text.split(/\s+/).length
 
   const savedLabel =
     status === 'saving'
@@ -275,68 +196,108 @@ export default function NoteEditor({
         </div>
       </header>
 
-      <div className="flex items-center border-y border-line px-4 py-1.5 md:px-6">
-        {TOOL_GROUPS.map((group, index) => (
-          <div key={index} className="flex items-center gap-0.5">
-            {index > 0 && <span className="mx-2 h-4 w-px bg-line" />}
-            {group.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => applyFormat(id)}
-                title={label}
-                className="rounded-md p-2 text-ink-3 transition-colors hover:bg-ink/6 hover:text-ink"
-              >
-                <Icon className="h-4 w-4" />
-                <span className="sr-only">{label}</span>
-              </button>
-            ))}
-          </div>
-        ))}
+      <div className="flex items-center gap-1 border-y border-line px-4 py-1.5 md:px-6">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setPicker((open) => (open === 'font' ? null : 'font'))}
+            aria-expanded={picker === 'font'}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[14px] text-ink-2 transition-colors hover:bg-ink/6 hover:text-ink"
+          >
+            {currentFont.label}
+            <ChevronDownIcon className="h-4 w-4 text-ink-3" />
+          </button>
+
+          {picker === 'font' && (
+            <Popover onClose={() => setPicker(null)}>
+              {NOTE_FONTS.map((option) => (
+                <MenuItem
+                  key={option.id}
+                  checked={option.id === currentFont.id}
+                  onClick={() => {
+                    editor?.chain().focus().setFontFamily(option.family).run()
+                    setPicker(null)
+                  }}
+                >
+                  <span style={{ fontFamily: option.family }}>
+                    {option.label}
+                  </span>
+                </MenuItem>
+              ))}
+            </Popover>
+          )}
+        </div>
+
+        <span className="mx-1 h-4 w-px bg-line" />
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setPicker((open) => (open === 'size' ? null : 'size'))}
+            aria-expanded={picker === 'size'}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[14px] text-ink-2 tabular-nums transition-colors hover:bg-ink/6 hover:text-ink"
+          >
+            {currentSize}
+            <ChevronDownIcon className="h-4 w-4 text-ink-3" />
+          </button>
+
+          {picker === 'size' && (
+            <Popover onClose={() => setPicker(null)}>
+              {FONT_SIZES.map((size) => (
+                <MenuItem
+                  key={size}
+                  checked={size === currentSize}
+                  onClick={() => {
+                    editor?.chain().focus().setFontSize(`${size}px`).run()
+                    setPicker(null)
+                  }}
+                >
+                  <span className="tabular-nums">{size}</span>
+                </MenuItem>
+              ))}
+            </Popover>
+          )}
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
         <div className="mx-auto w-full max-w-3xl px-6 pt-10 pb-16 md:px-10">
-          <input
-            ref={titleRef}
-            value={draft.title}
-            onChange={(event) =>
-              onChange({ ...draft, title: event.target.value })
-            }
-            placeholder="Title"
-            aria-label="Note title"
-            className="w-full bg-transparent text-[30px] font-semibold tracking-tight text-ink outline-none placeholder:text-ink-4"
-          />
-
-          <textarea
-            ref={bodyRef}
-            value={draft.body}
-            onChange={(event) =>
-              onChange({ ...draft, body: event.target.value })
-            }
-            onKeyDown={(event) => {
-              if (!event.ctrlKey && !event.metaKey) return
-
-              const key = event.key.toLowerCase()
-              if (key !== 'b' && key !== 'i') return
-
-              event.preventDefault()
-              applyFormat(key === 'b' ? 'bold' : 'italic')
-            }}
-            placeholder="Start writing, or pick a starting point below"
-            aria-label="Note body"
-            rows={1}
-            className={`mt-6 w-full resize-none overflow-hidden bg-transparent text-[16.5px] leading-[1.8] text-ink-2 outline-none placeholder:text-ink-4 ${
-              blank ? 'min-h-0' : 'min-h-96'
-            }`}
-          />
-
-          {blank && (
-            <NoteStarters
-              hasTitle={draft.title.trim() !== ''}
-              onApply={applyStarter}
+          <div className="relative">
+            <input
+              ref={titleRef}
+              value={draft.title}
+              onChange={(event) =>
+                onChange({ ...draft, title: event.target.value })
+              }
+              placeholder="Title"
+              aria-label="Note title"
+              className="w-full bg-transparent pb-3 text-[30px] font-medium text-ink outline-none placeholder:text-ink-4"
             />
-          )}
+
+            {draft.title !== '' && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden"
+              >
+                <span className="relative inline-block max-w-full text-[30px] font-medium whitespace-pre">
+                  <span className="invisible block h-2.5 overflow-hidden">
+                    {draft.title}
+                  </span>
+                  <MarkerUnderline className="absolute bottom-0 left-0 h-2.5 w-full text-ink" />
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div
+            className="note-body mt-6"
+            style={{
+              fontFamily: fontMeta(DEFAULT_FONT).family,
+              fontSize: `${DEFAULT_SIZE}px`,
+            }}
+          >
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
 

@@ -59,7 +59,10 @@ export default function DashboardLayout({
 
   return (
     <UserContext.Provider value={user}>
-      <div className="min-h-screen bg-page flex">
+      <div
+        className="min-h-screen bg-page flex"
+        style={{ fontFamily: 'var(--font-manrope), var(--font-sans)' }}
+      >
         <DashboardSidebar user={user} />
         {fullBleed ? (
           <main className="flex min-w-0 flex-1 flex-col">{children}</main>

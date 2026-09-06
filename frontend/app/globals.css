@@ -198,3 +198,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.note-body .ProseMirror,
+.note-body .ProseMirror:focus,
+.note-body .ProseMirror:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.note-body .tiptap p {
+  margin: 0;
+}
+
+.note-body .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--ink-4);
+  pointer-events: none;
+}

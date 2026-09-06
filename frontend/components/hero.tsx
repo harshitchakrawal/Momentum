@@ -14,11 +14,6 @@ const rise = (i: number) => ({
 export default function Hero() {
   return (
     <section className="relative min-h-screen overflow-hidden bg-page">
-      {/* Two cuts of the same photo, one per theme — the dark one inverts the
-          ground to black. Both are rendered and CSS picks the visible one (the
-          approach next/image documents for theme detection); we key off the
-          `.dark` class rather than prefers-color-scheme so it follows the
-          toggle, not the OS. Neither gets a scrim or filter. */}
       <Image
         src="/hero4.png"
         alt=""
