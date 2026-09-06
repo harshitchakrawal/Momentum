@@ -8,6 +8,8 @@ class Note(models.Model):
     body = models.TextField(blank=True)
     tags = models.JSONField(default=list, blank=True)
     pinned = models.BooleanField(default=False)
+    font = models.CharField(max_length=12, default="sans")
+    font_size = models.PositiveSmallIntegerField(default=16)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
