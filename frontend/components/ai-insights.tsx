@@ -14,8 +14,8 @@ const INSIGHTS = [
     alt: 'A developer collaborating with a teammate at a desk',
     caption: 'Connect daily progress to the work that moves projects forward',
   },
-  
-  
+
+
   {
     image: '/devanalytics.png',
     alt: 'A developer working with multiple screens',
@@ -31,7 +31,7 @@ const INSIGHTS = [
     alt: 'A blurred figure moving quickly through a bright space',
     caption: 'Spot momentum, slowdowns, and context switches across the week',
   },
-  
+
 ] as const
 
 export default function AiInsights() {

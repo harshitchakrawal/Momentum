@@ -67,7 +67,7 @@ export default function Hero() {
             className="rounded-full border border-ink/20 px-6 py-3.5 text-sm font-medium text-ink transition-colors hover:bg-ink/5"
           >
             See how it works
-          </Link> 
+          </Link>
         </motion.div>
       </div>
     </section>

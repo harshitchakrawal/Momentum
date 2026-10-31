@@ -52,7 +52,7 @@ export default function Nav() {
           </span>
         </Link>
 
-          
+
         <div className="hidden md:flex items-center gap-8">
           {links.map(({ label, href }) => {
             const cls =

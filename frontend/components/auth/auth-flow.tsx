@@ -77,9 +77,9 @@ export default function AuthFlow({ mode }: { mode: AuthMode }) {
     const timer = setTimeout(() => {
       setResendIn((seconds) =>(seconds - 1))
     }, 1000);
-    return () => clearTimeout(timer) 
+    return () => clearTimeout(timer)
   },[resendIn])
-  
+
   useEffect(() => {
     api.get('/auth/me/', { skipAuthRefresh: true })
       .then(() => router.replace('/dashboard'))
