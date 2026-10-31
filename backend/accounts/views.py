@@ -90,12 +90,16 @@ class GithubCallbackView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        from integrations.tasks import sync_github_for_user
+
         code = request.GET.get('code')
 
         try:
             user = github_oauth_authenticate(code)
         except GithubOAuthError as e:
             return Response({"error": str(e)}, status=400)
+
+        sync_github_for_user.delay(user.id)
 
         access, refresh = issue_tokens_for_user(user)
         response = redirect("http://localhost:3000/dashboard")
@@ -193,6 +197,8 @@ class GithubConnectCallbackView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        from integrations.tasks import sync_github_for_user
+
         user_id = consume_oauth_state(request.GET.get('state'), "github")
         if user_id is None:
             return redirect(f"{FRONTEND_DASHBOARD}?error=invalid_state")
@@ -209,6 +215,7 @@ class GithubConnectCallbackView(APIView):
         except GithubOAuthError:
             return redirect(f"{FRONTEND_DASHBOARD}?error=github_failed")
 
+        sync_github_for_user.delay(user.id)
         return redirect(FRONTEND_DASHBOARD)
 
 class GithubDisconnectView(APIView):

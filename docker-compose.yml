@@ -36,6 +36,37 @@ services:
       redis:
         condition: service_started
 
+  worker:
+    build:
+      context: ./backend
+    container_name: momentum-worker
+    command: celery -A config worker -l info
+    env_file:
+      - backend/.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  beat:
+    build:
+      context: ./backend
+    container_name: momentum-beat
+    command: celery -A config beat -l info
+    env_file:
+      - backend/.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+
   frontend:
     build:
       context: ./frontend

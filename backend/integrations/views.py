@@ -11,14 +11,12 @@ from accounts.services import create_oauth_state, consume_oauth_state
 from .serializers import RepoSerializer, CommitSerializer
 from .models import Repo, Commit
 
+from .tasks import sync_github_for_user
+
 from .services import (
-    fetch_github_commits,
     wakatime_oauth_authenticate,
     WakatimeOAuthError,
     WakatimeApiError,
-    GithubApiError,
-    sync_github_repos,
-    sync_github_commits,
     fetch_wakatime_stats,
     fetch_wakatime_todaygraph,
     unlink_wakatime_account,
@@ -30,14 +28,13 @@ UPSTREAM_FAILED = 502
 
 FRONTEND_DASHBOARD = "http://localhost:3000/dashboard"
 
+class GithubSyncView(APIView):
+    def post(self, request):
+        sync_github_for_user.delay(request.user.id)
+        return Response(status=202)
 
 class GithubRepoViews(APIView):
     def get(self, request):
-        try:
-            sync_github_repos(request.user.github_token, request.user)
-        except GithubApiError as e:
-            return Response({"error": str(e)}, status=UPSTREAM_FAILED)
-
         repos = Repo.objects.filter(user=request.user)
         serializer = RepoSerializer(repos, many=True)
         return Response(serializer.data)
@@ -45,11 +42,6 @@ class GithubRepoViews(APIView):
 
 class GithubCommitViews(APIView):
     def get(self, request):
-        try:
-            sync_github_commits(request.user.github_token, request.user)
-        except GithubApiError as e:
-            return Response({"error": str(e)}, status=UPSTREAM_FAILED)
-
         commit = Commit.objects.filter(repo__user=request.user)
         serializer = CommitSerializer(commit, many=True)
         return Response(serializer.data)

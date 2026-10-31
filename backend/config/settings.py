@@ -158,6 +158,15 @@ AUTH_USER_MODEL = "accounts.User"
 
 REDIS_URL = env('REDIS_URL', default='redis://redis:6379/0')
 
+CELERY_BROKER_URL = REDIS_URL
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    "sync-github": {
+        "task": "integrations.tasks.sync_all_github",
+        "schedule": 900,
+    },
+}
+
 GITHUB_CLIENT_ID = env('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = env('GITHUB_CLIENT_SECRET')
 
