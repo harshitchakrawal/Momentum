@@ -52,7 +52,6 @@ export default function Nav() {
           </span>
         </Link>
 
-
         <div className="hidden md:flex items-center gap-8">
           {links.map(({ label, href }) => {
             const cls =
@@ -73,31 +72,31 @@ export default function Nav() {
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
-        <ThemeToggle />
+          <ThemeToggle />
 
-        {username ? (
-          <Link
-            href="/dashboard"
-            title={`Signed in as ${username}`}
-            className="font-mono flex shrink-0 items-center gap-2 bg-page text-ink text-md font-medium px-4 md:px-5 py-2.5 rounded-full hover:bg-page/85 transition-colors"
-          >
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ink/15 text-[11px] font-semibold uppercase">
-              {username.slice(0, 1)}
-            </span>
-            <span className="max-w-32 truncate">{username}</span>
-          </Link>
-        ) : username === false ? (
-          <Link
-            href="/signup"
-            className="font-mono shrink-0 bg-page text-ink text-md font-medium px-5 md:px-6 py-3 rounded-full hover:bg-page/85 transition-colors"
-          >
-            Try Momentum
-          </Link>
-        ) : (
-          // Placeholder while the session check is in flight, so the pill does
-          // not visibly swap once the answer arrives.
-          <span aria-hidden className="h-12 w-36 shrink-0 rounded-full bg-page/30" />
-        )}
+          {username ? (
+            <Link
+              href="/dashboard"
+              title={`Signed in as ${username}`}
+              className="font-mono flex shrink-0 items-center gap-2 bg-page text-ink text-md font-medium px-4 md:px-5 py-2.5 rounded-full hover:bg-page/85 transition-colors"
+            >
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ink/15 text-[11px] font-semibold uppercase">
+                {username.slice(0, 1)}
+              </span>
+              <span className="max-w-32 truncate">{username}</span>
+            </Link>
+          ) : username === false ? (
+            <Link
+              href="/signup"
+              className="font-mono shrink-0 bg-page text-ink text-md font-medium px-5 md:px-6 py-3 rounded-full hover:bg-page/85 transition-colors"
+            >
+              Try Momentum
+            </Link>
+          ) : (
+            // Placeholder while the session check is in flight, so the pill does
+            // not visibly swap once the answer arrives.
+            <span aria-hidden className="h-12 w-36 shrink-0 rounded-full bg-page/30" />
+          )}
         </div>
       </motion.nav>
     </div>
