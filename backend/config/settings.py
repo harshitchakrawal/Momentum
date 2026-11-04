@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import environ
+from celery.schedules import crontab
 from datetime import timedelta
 from pathlib import Path
 
@@ -166,7 +167,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "integrations.tasks.sync_all_github",
         "schedule": 900,
     },
+    "daily-insights": {
+        "task": "insights.tasks.generate_all_insights",
+        "schedule": crontab(hour=0, minute=30),
+    },
 }
+
+GEMINI_API_KEY = env('GEMINI_API_KEY', default=None)
+GEMINI_MODEL = env('GEMINI_MODEL', default='gemini-2.5-flash')
 
 GITHUB_CLIENT_ID = env('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = env('GITHUB_CLIENT_SECRET')
