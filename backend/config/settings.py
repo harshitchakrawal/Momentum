@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'tasks',
     'notes',
+    'insights',
 ]
 
 MIDDLEWARE = [
